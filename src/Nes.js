@@ -9,17 +9,25 @@
       audio     => ???
     */
     function Nes(opts) {
-        //this.cpu = new Nestled.Cpu;
-        //this.ppu = new Nestled.Ppu;
-        
         this.cartridge = opts && opts[cartridge];
         this.joypads = opts && opts[joypads];
         this.video = opts && opts[video];
         this.audio = opts && opts[audio];
         
+        var cpu = new Nestled.Cpu(this.cartridge);
+        this.cpu = cpu;
+        //this.ppu = new Nestled.Ppu(cartridge);
+        
         var isPowered = false;
-        this.powerOn  = function() { return isPowered = true; };
-        this.powerOff = function() { return isPowered = false; };
+        var mainLoop = null;
+        this.powerOn  = function() {
+            mainLoop = setInterval(function() { cpu.emulateFrame(); }, 1000/60);
+            return isPowered = true;
+        };
+        this.powerOff = function() {
+            clearInterval(mainLoop);
+            return isPowered = false;
+        };
         this.isPoweredOn  = function() { return isPowered; };
         this.isPoweredOff = function() { return !isPowered; };
     }
@@ -31,11 +39,7 @@
     
         pressPower: function() {
             if (this.isPoweredOff()) {
-                this.powerOn();// &&
-                //... &&
-                //this.ppu.powerOn() &&
-                //this.cpu.powerOn() &&
-                //this.cpu.triggerRESET();
+                this.powerOn();
             } else {
                 this.powerOff();
             }
