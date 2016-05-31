@@ -139,33 +139,42 @@
         
         //== Addressing Modes ===========================================//
         
-        Implied: function(operand) {
-        },
-        Immediate: function(operand) {
-        },
-        Relative: function(operand) {
-        },
+        imp:   function(operand) { return null; },            //Implied
+        imm:   function(operand) { return this.PC; },         //Immediate - #00
         
-        ZeroPage: function(operand) {
-        },
-        ZeroPageX: function(operand) { // Indexed
-        },
-        ZeroPageY: function(operand) { // Indexed
-        },
+        rel:   function(operand) { return this.PC+this.cSignedByte(operand); }, //Relative - ±#00
         
-        Absolute: function(operand) {
-        },
-        AbsoluteX: function(operand) { // Indexed
-        },
-        AbsoluteY: function(operand) { // Indexed
-        },
+        zero:  function(operand) { return operand & 0xFF; },            //Zero Page - $00
+        zeroX: function(operand) { return (operand + this.X) & 0xFF; }, //Zero Page indexed X - $00+X
+        zeroY: function(operand) { return (operand + this.Y) & 0xFF; }, //Zero Page indexed Y - $00+Y
         
-        Indirect: function(operand) {
-        },
-        IndirectX: function(operand) { // Indexed indirect
-        },
-        IndirectY: function(operand) { // Indirect indexed
-        },
+        abs:   function(operand) { return operand + (this.read(++this.PC) << 8); }, //Absolute - $0000
+        absX:  function(operand) { return this.abs(operand) + this.X; },            //Absolute indexed X - $0000+X
+        absY:  function(operand) { return this.abs(operand) + this.Y; },            //Absolute indexed Y - $0000+Y
+        
+        
+        ind:   function(operand) { return this.readWord(this.abs(operand)); },                                         //Indirect - ($0000)
+        indX:  function(operand) { return this.read(this.zeroX(operand)) + (this.read(this.zeroX(operand+1)) << 8); }, //Indirect indexed X - ($00+X)
+        indY:  function(operand) { return this.read(this.zero(operand) + (this.zero(operand+1) << 8) + this.Y); },     //Indirect indexed Y - ($00)+Y
+        
+        addressLookup: [
+            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
+            Cpu.abs, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
+            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
+            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.ind,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
+            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroY, Cpu.zeroY, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absY, Cpu.absY,
+            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroY, Cpu.zeroY, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absY, Cpu.absY,
+            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
+            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
+            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX
+        ],
         
         //== OpCodes ====================================================//
         
@@ -299,7 +308,10 @@
         NOP: function(operand) { //Do nothing
         },
         KIL: function(operand) { //Crashes the machine!
-        }
+        },
+        
+        //Helper function to make javascript's native 64bit floating point numbers look like signed bytes
+        cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; }
     }
     
     Nestled.Cpu = Cpu;
