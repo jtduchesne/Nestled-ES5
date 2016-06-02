@@ -23,6 +23,9 @@
         //RAM
         this.ram = new Array(0x800);
         
+        //Pre-allocated buffer for arithmetic operations
+        this.alu = 0;
+        
         //Initial RESET
         if (this.cartridge) { this.doRESET(); }
     }
@@ -115,6 +118,35 @@
             return this.popByte + (this.popByte << 8);
         },
         
+        //== Registers ==================================================//
+        
+        setA: function(value) {
+            this.A = value;
+            this.setZero(this.A==0);
+            this.setNegative(this.A<0);
+            return this.A;
+        },
+        setX: function(value) {
+            this.X = value;
+            this.setZero(this.X==0);
+            this.setNegative(this.X<0);
+            return this.X;
+        },
+        setY: function(value) {
+            this.Y = value;
+            this.setZero(this.Y==0);
+            this.setNegative(this.Y<0);
+            return this.Y;
+        },
+        //I put this here because the Z and N flags also seem to be set
+        //everytime the ALU is used...
+        setALU: function(value) {
+            this.alu = value;
+            this.setZero(this.alu==0);
+            this.setNegative(this.alu<0);
+            return this.alu;
+        },
+        
         //== Status =====================================================//
         getCarry:     function() { return this.P & 0x01; },
         getZero:      function() { return this.P & 0x02; },
@@ -180,135 +212,203 @@
         
         // Jump, subroutine and interrupt
         BRK: function(operand) { //Break
+            this.pushWord(this.PC+=2);
+            this.pushByte(this.P);
+            this.PC = this.readWord(0xFFFE);
         },
         RTI: function(operand) { //Return from Interrupt
+            this.P = this.pullByte();
+            this.PC = this.pullWord();
         },
         JSR: function(operand) { //Jump to Subroutine
+            this.pushWord(this.PC+=2);
+            this.PC = operand + this.read(++this.PC);
         },
         RTS: function(operand) { //Return from Subroutine
+            this.PC = this.pullWord() + 1;
         },
         JMP: function(operand) { //Jump to
+            this.PC = operand + this.read(++this.PC);
         },
         
         // Branching
         BPL: function(operand) { //Branch if Positive
+            if (!this.getNegative()) { this.PC = operand; }
+            else this.PC++;
         },
         BMI: function(operand) { //Branch if Negative
+            if (this.getNegative()) { this.PC = operand; }
+            else this.PC++;
         },
         BVC: function(operand) { //Branch if oVerflow Clear
+            if (!this.getOverfow()) { this.PC = operand; }
+            else this.PC++;
         },
         BVS: function(operand) { //Branch if oVerflow Set
+            if (this.getOverfow()) { this.PC = operand; }
+            else this.PC++;
         },
         BCC: function(operand) { //Branch if Carry Clear
+            if (!this.getCarry()) { this.PC = operand; }
+            else this.PC++;
         },
         BCS: function(operand) { //Branch if Carry Set
+            if (this.getCarry()) { this.PC = operand; }
+            else this.PC++;
         },
         BNE: function(operand) { //Branch if Not Equal
+            if (!this.getZero()) { this.PC = operand; }
+            else this.PC++;
         },
         BEQ: function(operand) { //Branch if Equal
+            if (this.getZero()) { this.PC = operand; }
+            else this.PC++;
         },
         
         // Stack
-        PHP: function(operand) { //Push Processor Status
-        },
-        PLP: function(operand) { //Pull Processor Status
-        },
-        PHA: function(operand) { //Push Accumulator
-        },
-        PLA: function(operand) { //Pull Accumulator
-        },
+        PHA: function(operand) { this.pushByte(this.A); }, //Push Accumulator
+        PHP: function(operand) { this.pushByte(this.P); }, //Push Processor Status
+        PLA: function(operand) { this.setA(this.pullByte()); }, //Pull Accumulator
+        PLP: function(operand) { this.P = this.pullByte(); },   //Pull Processor Status
         
         // Status flags
-        CLC: function(operand) { //Clear Carry
-        },
-        CLD: function(operand) { //Clear Decimal
-        },
-        CLI: function(operand) { //Clear Interrupt
-        },
-        CLV: function(operand) { //Clear oVerflow
-        },
-        SEC: function(operand) { //Set Carry
-        },
-        SED: function(operand) { //Set Decimal
-        },
-        SEI: function(operand) { //Set Interrupt
-        },
+        CLC: function(operand) { this.clrCarry(); },
+        CLD: function(operand) { this.clrDecimal(); },
+        CLI: function(operand) { this.clrInterrupt(); },
+        CLV: function(operand) { this.clrOverflow(); },
+        SEC: function(operand) { this.setCarry(true); },
+        SED: function(operand) { this.setDecimal(); },
+        SEI: function(operand) { this.setInterrupt(); },
         
         // Register transfert
-        TAX: function(operand) { //Transfert A to X
-        },
-        TXA: function(operand) { //Transfert X to A
-        },
-        TAY: function(operand) { //Transfert A to Y
-        },
-        TYA: function(operand) { //Transfert Y to A
-        },
-        TSX: function(operand) { //Transfert SP to X
-        },
-        TXS: function(operand) { //Transfert X to SP
-        },
+        TAX: function(operand) { this.setX(this.A); }, //Transfert A to X
+        TXA: function(operand) { this.setA(this.X); }, //Transfert X to A
+        TAY: function(operand) { this.setY(this.A); }, //Transfert A to Y
+        TYA: function(operand) { this.setA(this.Y); }, //Transfert Y to A
+        TSX: function(operand) { this.setX(this.SP); }, //Transfert SP to X
+        TXS: function(operand) { this.SP = this.X; },   //Transfert X to SP
         
         // Move operations
-        LDA: function(operand) { //Load Accumulator
-        },
-        STA: function(operand) { //Store Accumulator
-        },
-        LDX: function(operand) { //Load X
-        },
-        STX: function(operand) { //Store X
-        },
-        LDY: function(operand) { //Load Y
-        },
-        STY: function(operand) { //Store Y
-        },
+        LDA: function(operand) { this.setA(this.read(operand)); }, //Load Accumulator
+        LDX: function(operand) { this.setX(this.read(operand)); }, //Load X
+        LDY: function(operand) { this.setY(this.read(operand)); }, //Load Y
+        STA: function(operand) { this.write(operand, this.A); }, //Store Accumulator
+        STX: function(operand) { this.write(operand, this.X); }, //Store X
+        STY: function(operand) { this.write(operand, this.Y); }, //Store Y
         
         // Arithmetic operations
         ADC: function(operand) { //Add with Carry
+            this.setA(this.A+this.cSignedByte(this.read(operand))+this.getCarry());
+            if (this.setCarry(this.setOverflow(this.A>0x7F))) { this.A-=0x80; }
         },
         SBC: function(operand) { //Subtract with Carry
+            this.setA(this.A-this.cSignedByte(this.read(operand))-(1-this.getCarry()));
+            if (this.setCarry(!this.setOverflow(this.A>0x7F))) { this.A-=0x80; }
         },
         ASL: function(operand) { //Arithmetic Shift Left
+            if (operand===null) { //Opcode $0A uses the accumulator
+                this.setA(this.A*2);
+                if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
+            } else {
+                this.setALU(this.read(operand)*2);
+                if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
+                this.write(operand, this.alu);
+            }
         },
         LSR: function(operand) { //Logical Shift Right
+            if (operand===null) { //Opcode $4A uses the accumulator
+                if (this.setCarry(this.A%2)) { this.A-=1; }
+                this.setA(this.A/2);
+            } else {
+                this.alu = this.read(operand);
+                if (this.setCarry(this.alu%2)) { this.alu-=1; }
+                this.write(operand, this.setALU(this.alu/2));
+            }
         },
         ROL: function(operand) { //Rotate Left
+            if (operand===null) { //Opcode $2A uses the accumulator
+                this.setA(this.A*2+this.getCarry());
+                if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
+            } else {
+                this.setALU(this.read(operand)*2+this.getCarry());
+                if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
+                this.write(operand, this.alu);
+            }
         },
         ROR: function(operand) { //Rotate Right
+            if (operand===null) { //Opcode $6A uses the accumulator
+                this.alu = this.A+(this.getCarry()*0x100);
+                if (this.setCarry(this.alu%2)) { this.alu-=1; }
+                this.setA(this.alu/2);
+            } else {
+                this.alu = this.read(operand)+(this.getCarry()*0x100);
+                if (this.setCarry(this.alu%2)) { this.alu-=1; }
+                this.write(operand, this.setALU(this.alu/2));
+            }
         },
-        DEC: function(operand) { //Decrement any
-        },
-        DEX: function(operand) { //Decrement X
-        },
-        DEY: function(operand) { //Decrement Y
-        },
-        INC: function(operand) { //Increment any
-        },
-        INX: function(operand) { //Increment X
-        },
-        INY: function(operand) { //Increment Y
-        },
+        
+        INC: function(operand) { this.write(this.setALU(this.read(operand)+1)); }, //Increment memory
+        DEC: function(operand) { this.write(this.setALU(this.read(operand)-1)); }, //Decrement memory
+        INX: function(operand) { this.setX(this.X+1); }, //Increment X
+        DEX: function(operand) { this.setX(this.X-1); }, //Decrement X
+        INY: function(operand) { this.setY(this.Y+1); }, //Increment Y
+        DEY: function(operand) { this.setY(this.Y-1); }, //Decrement Y
+        
         BIT: function(operand) { //Bit test
+            this.alu = this.read(operand);
+            if (this.setNegative(this.alu>0x7F)) {
+                this.setOverflow(this.alu>0x3F);
+            } else {
+                this.setOverflow(this.alu>0xBF);
+            }
+            this.setZero(!(this.A&this.alu));
         },
         CMP: function(operand) { //Compare with Accumulator
+            this.alu = this.read(operand);
+            this.setCarry(this.A>=this.alu);
+            this.setZero(this.A==this.alu);
+            this.setNegative(this.alu<0);
         },
         CPX: function(operand) { //Compare with X
+            this.alu = this.read(operand);
+            this.setCarry(this.X>=this.alu);
+            this.setZero(this.X==this.alu);
+            this.setNegative(this.alu<0);
         },
         CPY: function(operand) { //Compare with Y
+            this.alu = this.read(operand);
+            this.setCarry(this.Y>=this.alu);
+            this.setZero(this.Y==this.alu);
+            this.setNegative(this.alu<0);
         },
         
         // Logical operations
-        ORA: function(operand) { //Logical OR
-        },
-        AND: function(operand) { //Logical AND
-        },
-        EOR: function(operand) { //Exclusive OR
-        },
+        ORA: function(operand) { this.setA(this.A|this.read(operand)); }, //Logical OR
+        AND: function(operand) { this.setA(this.A&this.read(operand)); }, //Logical AND
+        EOR: function(operand) { this.setA(this.A^this.read(operand)); }, //Exclusive OR
         
         // Others
-        NOP: function(operand) { //Do nothing
-        },
-        KIL: function(operand) { //Crashes the machine!
-        },
+        NOP: function(operand) { return; }, //Do nothing
+        KIL: function(operand) { this.doRESET(); }, //Crashes the machine!
+        
+        opCodeLookup: [
+            Cpu.BRK, Cpu.ORA, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.PHP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP,
+            Cpu.BPL, Cpu.ORA, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.CLC, Cpu.ORA, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP,
+            Cpu.JSR, Cpu.AND, Cpu.KIL, Cpu.NOP, Cpu.BIT, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.PLP, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.BIT, Cpu.AND, Cpu.ROL, Cpu.NOP,
+            Cpu.BMI, Cpu.AND, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.SEC, Cpu.AND, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.AND, Cpu.ROL, Cpu.NOP,
+            Cpu.RTI, Cpu.EOR, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.PHA, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.JMP, Cpu.EOR, Cpu.LSR, Cpu.NOP,
+            Cpu.BVC, Cpu.EOR, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.CLI, Cpu.EOR, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP,
+            Cpu.RTS, Cpu.ADC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.PLA, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.JMP, Cpu.ADC, Cpu.ROR, Cpu.NOP,
+            Cpu.BVS, Cpu.ADC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.SEI, Cpu.ADC, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP,
+            Cpu.NOP, Cpu.STA, Cpu.NOP, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP, Cpu.DEY, Cpu.NOP, Cpu.TXA, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP,
+            Cpu.BCC, Cpu.STA, Cpu.KIL, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP, Cpu.TYA, Cpu.STA, Cpu.TXS, Cpu.NOP, Cpu.SHY, Cpu.STA, Cpu.SHX, Cpu.NOP,
+            Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.TAY, Cpu.LDA, Cpu.TAX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP,
+            Cpu.BCS, Cpu.LDA, Cpu.KIL, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.CLV, Cpu.LDA, Cpu.TSX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP,
+            Cpu.CPY, Cpu.CMP, Cpu.NOP, Cpu.NOP, Cpu.CPY, Cpu.CMP, Cpu.DEC, Cpu.NOP, Cpu.INY, Cpu.CMP, Cpu.DEX, Cpu.NOP, Cpu.CPY, Cpu.CMP, Cpu.DEC, Cpu.NOP,
+            Cpu.BNE, Cpu.CMP, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.CMP, Cpu.DEC, Cpu.NOP, Cpu.CLD, Cpu.CMP, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.CMP, Cpu.DEC, Cpu.NOP,
+            Cpu.CPX, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.CPX, Cpu.SBC, Cpu.INC, Cpu.NOP, Cpu.INX, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.CPX, Cpu.SBC, Cpu.INC, Cpu.NOP,
+            Cpu.BEQ, Cpu.SBC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP, Cpu.SED, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP
+        ],
         
         //Helper function to make javascript's native 64bit floating point numbers look like signed bytes
         cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; }
