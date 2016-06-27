@@ -573,6 +573,28 @@ module.exports = function (chai, _) {
   });
 
   /**
+   * ### .truthy
+   *
+   * Asserts that the target is `truthy`.
+   *
+   *     expect(1).to.be.truthy;
+   *     expect('1').to.be.truthy;
+   *     expect('yes').to.be.truthy;
+   *
+   * @name truthy
+   * @namespace BDD
+   * @api public
+   */
+
+  Assertion.addProperty('truthy', function () {
+    this.assert(
+        flag(this, 'object')
+      , 'expected #{this} to be truthy'
+      , 'expected #{this} not to be truthy'
+    );
+  });
+
+  /**
    * ### .false
    *
    * Asserts that the target is `false`.
@@ -591,6 +613,28 @@ module.exports = function (chai, _) {
       , 'expected #{this} to be false'
       , 'expected #{this} to be true'
       , this.negate ? true : false
+    );
+  });
+
+  /**
+   * ### .falsy
+   *
+   * Asserts that the target is `falsy`.
+   *
+   *     expect(0).to.be.falsy;
+   *     expect('').to.be.falsy;
+   *     expect(null).to.be.falsy;
+   *
+   * @name falsy
+   * @namespace BDD
+   * @api public
+   */
+
+  Assertion.addProperty('falsy', function () {
+    this.assert(
+        !flag(this, 'object')
+      , 'expected #{this} to be falsy'
+      , 'expected #{this} not to be falsy'
     );
   });
 
