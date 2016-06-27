@@ -30,6 +30,14 @@ describe("Nestled", function() {
                 expect(subject.read(0x8002)).to.equal(0x22); });
             it("reads from PRG-ROM[1] when address is between [0xC000, 0xFFFF]", function() {
                 expect(subject.read(0xC001)).to.equal(0x31); });
+            
+            context("when there is only 1 PRG-Rom page", function() {
+                var otherSubject = new Nestled.Cartridge({sram: sram, PRGRom: [PRGRom[0]]});
+                
+                it("mirrors every reads to the first page", function() {
+                    expect(otherSubject.read(0xC001)).to.equal(0x21);
+                });
+            });
         });
 
         describe("#readWord(address)", function() {

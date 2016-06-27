@@ -14,10 +14,11 @@
     function Cartridge(opts) {
         this.PRGRom = (opts && opts['PRGRom']) || [];
         this.CHRRom = (opts && opts['CHRRom']) || [];
+        this.highPRGPageIndex = this.PRGRom.length - 1;
         
         this.mapperNumber = (opts && opts['mapperNumber']) || 0;
         
-        this.sram = new Array((opts && opts['sramEnabled']) ? 0x2000 : 0);
+        this.sram = (opts && opts['sram']) || new Array((opts && opts['sramEnabled']) ? 0x2000 : 0);
         
         this.fourscreenMirroring = opts && opts['fourscreenMirroring'];
         this.horizontalMirroring = opts && opts['horizontalMirroring'];
@@ -30,7 +31,7 @@
         //== Memory access ==============================================//
         read: function(address) {
             if (address >= 0xC000) {
-                return this.PRGRom[1][address & 0x3FFF];
+                return this.PRGRom[this.highPRGPageIndex][address & 0x3FFF];
             } else if (address >= 0x8000) {
                 return this.PRGRom[0][address & 0x3FFF];
             } else {
@@ -40,8 +41,9 @@
         readWord: function(address) {
             if (address >= 0xC000) {
                 address &= 0x3FFF;
-                return this.PRGRom[1][address] + (this.PRGRom[1][address+1] * 0x100);
-             } else if (address >= 0x8000) {
+                return this.PRGRom[this.highPRGPageIndex][address] + 
+                      (this.PRGRom[this.highPRGPageIndex][address+1] * 0x100);
+            } else if (address >= 0x8000) {
                 address &= 0x1FFF;
                 return this.PRGRom[0][address] + (this.PRGRom[0][address+1] * 0x100);
             } else {
