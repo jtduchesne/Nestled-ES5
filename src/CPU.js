@@ -50,6 +50,26 @@
             this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX
         ];
         
+        //Instructions lookup table
+        this.instructionLookup = [
+            this.BRK, this.ORA, this.KIL, this.NOP, this.NOP, this.ORA, this.ASL, this.NOP, this.PHP, this.ORA, this.ASL, this.NOP, this.NOP, this.ORA, this.ASL, this.NOP,
+            this.BPL, this.ORA, this.KIL, this.NOP, this.NOP, this.ORA, this.ASL, this.NOP, this.CLC, this.ORA, this.NOP, this.NOP, this.NOP, this.ORA, this.ASL, this.NOP,
+            this.JSR, this.AND, this.KIL, this.NOP, this.BIT, this.AND, this.ROL, this.NOP, this.PLP, this.AND, this.ROL, this.NOP, this.BIT, this.AND, this.ROL, this.NOP,
+            this.BMI, this.AND, this.KIL, this.NOP, this.NOP, this.AND, this.ROL, this.NOP, this.SEC, this.AND, this.NOP, this.NOP, this.NOP, this.AND, this.ROL, this.NOP,
+            this.RTI, this.EOR, this.KIL, this.NOP, this.NOP, this.EOR, this.LSR, this.NOP, this.PHA, this.EOR, this.LSR, this.NOP, this.JMP, this.EOR, this.LSR, this.NOP,
+            this.BVC, this.EOR, this.KIL, this.NOP, this.NOP, this.EOR, this.LSR, this.NOP, this.CLI, this.EOR, this.NOP, this.NOP, this.NOP, this.EOR, this.LSR, this.NOP,
+            this.RTS, this.ADC, this.KIL, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP, this.PLA, this.ADC, this.ROR, this.NOP, this.JMP, this.ADC, this.ROR, this.NOP,
+            this.BVS, this.ADC, this.KIL, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP, this.SEI, this.ADC, this.NOP, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP,
+            this.NOP, this.STA, this.NOP, this.NOP, this.STY, this.STA, this.STX, this.NOP, this.DEY, this.NOP, this.TXA, this.NOP, this.STY, this.STA, this.STX, this.NOP,
+            this.BCC, this.STA, this.KIL, this.NOP, this.STY, this.STA, this.STX, this.NOP, this.TYA, this.STA, this.TXS, this.NOP, this.SHY, this.STA, this.SHX, this.NOP,
+            this.LDY, this.LDA, this.LDX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP, this.TAY, this.LDA, this.TAX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP,
+            this.BCS, this.LDA, this.KIL, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP, this.CLV, this.LDA, this.TSX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP,
+            this.CPY, this.CMP, this.NOP, this.NOP, this.CPY, this.CMP, this.DEC, this.NOP, this.INY, this.CMP, this.DEX, this.NOP, this.CPY, this.CMP, this.DEC, this.NOP,
+            this.BNE, this.CMP, this.KIL, this.NOP, this.NOP, this.CMP, this.DEC, this.NOP, this.CLD, this.CMP, this.NOP, this.NOP, this.NOP, this.CMP, this.DEC, this.NOP,
+            this.CPX, this.SBC, this.NOP, this.NOP, this.CPX, this.SBC, this.INC, this.NOP, this.INX, this.SBC, this.NOP, this.NOP, this.CPX, this.SBC, this.INC, this.NOP,
+            this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
+        ];
+        
         //Initial RESET
         if (this.cartridge) { this.doRESET(); }
     }
@@ -71,8 +91,10 @@
         },
         doInstruction: function() {
             this.opcode  = this.read(this.PC++);
-            this.operand = this.read(this.PC++);
-            this.instructionLookup[this.opcode].call(this, this.addressLookup[this.opcode].call(this, this.operand));
+            this.operand = this.read(this.PC);
+            this.instructionLookup[this.opcode].call(this, function() {
+                return this.addressLookup[this.opcode].call(this, this.operand);
+            });
         },
         
         //== Interrupts =================================================//
@@ -115,7 +137,7 @@
         },
         write: function(address, data) {
             if (address < 0x2000) {
-                this.ram[address & 0x7FF] = data;
+                this.ram[address & 0x7FF] = (data & 0xFF);
             } else if (address < 0x4018) {
                 if (address < 0x4000)       { /* this.ppu.write(address,data); */ }
                 else if (address == 0x4014) {
@@ -149,31 +171,15 @@
         
         //== Registers ==================================================//
         
-        setA: function(value) {
-            this.A = value;
-            this.setZero(this.A==0);
-            this.setNegative(this.A<0);
-            return this.A;
-        },
-        setX: function(value) {
-            this.X = value;
-            this.setZero(this.X==0);
-            this.setNegative(this.X<0);
-            return this.X;
-        },
-        setY: function(value) {
-            this.Y = value;
-            this.setZero(this.Y==0);
-            this.setNegative(this.Y<0);
-            return this.Y;
-        },
-        //I put this here because the Z and N flags also seem to be set
-        //everytime the ALU is used...
-        setALU: function(value) {
-            this.alu = value;
-            this.setZero(this.alu==0);
-            this.setNegative(this.alu<0);
-            return this.alu;
+        setA:   function(value) { return this.setZNFlags(this.A = value); },
+        setX:   function(value) { return this.setZNFlags(this.X = value); },
+        setY:   function(value) { return this.setZNFlags(this.Y = value); },
+        setALU: function(value) { return this.setZNFlags(this.alu = value); },
+        
+        setZNFlags: function(value) {
+            this.setZero(!(value&0xFF));
+            this.setNegative(this.cSignedByte(value)<0);
+            return value;
         },
         
         //== Status =====================================================//
@@ -203,13 +209,13 @@
         imp:   function(operand) { return null; },    //Implied
         imm:   function(operand) { return this.PC; }, //Immediate - #00
         
-        rel:   function(operand) { return this.PC+this.cSignedByte(operand); }, //Relative - ±#00
+        rel:   function(operand) { return ++this.PC + this.cSignedByte(operand); }, //Relative - ±#00
         
-        zero:  function(operand) { return operand & 0xFF; },            //Zero Page - $00
-        zeroX: function(operand) { return (operand + this.X) & 0xFF; }, //Zero Page indexed X - $00+X
-        zeroY: function(operand) { return (operand + this.Y) & 0xFF; }, //Zero Page indexed Y - $00+Y
+        zero:  function(operand) { return operand & 0xFF; },              //Zero Page - $00
+        zeroX: function(operand) { return this.zero(operand + this.X); }, //Zero Page indexed X - $00+X
+        zeroY: function(operand) { return this.zero(operand + this.Y); }, //Zero Page indexed Y - $00+Y
         
-        abs:   function(operand) { return operand + (this.read(this.PC++) * 256); }, //Absolute - $0000
+        abs:   function(operand) { return operand + (this.read(++this.PC) * 256); }, //Absolute - $0000
         absX:  function(operand) { return this.abs(operand) + this.X; },             //Absolute indexed X - $0000+X
         absY:  function(operand) { return this.abs(operand) + this.Y; },             //Absolute indexed Y - $0000+Y
         
@@ -223,11 +229,11 @@
         //Helper function to convert signed bytes to javascript's native numbers
         cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; },
         
-        //== OpCodes ====================================================//
+        //== Instructions ===============================================//
         
         // Jump, subroutine and interrupt
-        BRK: function(operand) { //Break
-            this.pushWord(this.PC+=2);
+        BRK: function(operand) { //Interrupt
+            this.pushWord(this.PC);
             this.pushByte(this.P);
             this.PC = this.readWord(0xFFFE);
         },
@@ -236,47 +242,47 @@
             this.PC = this.pullWord();
         },
         JSR: function(operand) { //Jump to Subroutine
-            this.pushWord(this.PC+=2);
-            this.PC = operand + this.read(++this.PC);
+            this.pushWord(this.PC);
+            this.PC = operand.call(this);
         },
         RTS: function(operand) { //Return from Subroutine
             this.PC = this.pullWord() + 1;
         },
         JMP: function(operand) { //Jump to
-            this.PC = operand + this.read(++this.PC);
+            this.PC = operand.call(this);
         },
         
         // Branching
         BPL: function(operand) { //Branch if Positive
-            if (!this.getNegative()) { this.PC = operand; }
+            if (!this.getNegative()) this.PC = operand.call(this);
             else this.PC++;
         },
         BMI: function(operand) { //Branch if Negative
-            if (this.getNegative()) { this.PC = operand; }
+            if (this.getNegative()) this.PC = operand.call(this);
             else this.PC++;
         },
         BVC: function(operand) { //Branch if oVerflow Clear
-            if (!this.getOverfow()) { this.PC = operand; }
+            if (!this.getOverflow()) this.PC = operand.call(this);
             else this.PC++;
         },
         BVS: function(operand) { //Branch if oVerflow Set
-            if (this.getOverfow()) { this.PC = operand; }
+            if (this.getOverflow()) this.PC = operand.call(this);
             else this.PC++;
         },
         BCC: function(operand) { //Branch if Carry Clear
-            if (!this.getCarry()) { this.PC = operand; }
+            if (!this.getCarry()) this.PC = operand.call(this);
             else this.PC++;
         },
         BCS: function(operand) { //Branch if Carry Set
-            if (this.getCarry()) { this.PC = operand; }
+            if (this.getCarry()) this.PC = operand.call(this);
             else this.PC++;
         },
         BNE: function(operand) { //Branch if Not Equal
-            if (!this.getZero()) { this.PC = operand; }
+            if (!this.getZero()) this.PC = operand.call(this);
             else this.PC++;
         },
         BEQ: function(operand) { //Branch if Equal
-            if (this.getZero()) { this.PC = operand; }
+            if (this.getZero()) this.PC = operand.call(this);
             else this.PC++;
         },
         
@@ -304,54 +310,67 @@
         TXS: function(operand) { this.SP = this.X; },   //Transfert X to SP
         
         // Move operations
-        LDA: function(operand) { this.setA(this.read(operand)); }, //Load Accumulator
-        LDX: function(operand) { this.setX(this.read(operand)); }, //Load X
-        LDY: function(operand) { this.setY(this.read(operand)); }, //Load Y
-        STA: function(operand) { this.write(operand, this.A); }, //Store Accumulator
-        STX: function(operand) { this.write(operand, this.X); }, //Store X
-        STY: function(operand) { this.write(operand, this.Y); }, //Store Y
+        LDA: function(operand) { this.setA(this.read(operand.call(this))); this.PC++; }, //Load Accumulator
+        LDX: function(operand) { this.setX(this.read(operand.call(this))); this.PC++; }, //Load X
+        LDY: function(operand) { this.setY(this.read(operand.call(this))); this.PC++; }, //Load Y
+        STA: function(operand) { this.write(operand.call(this), this.A); this.PC++; }, //Store Accumulator
+        STX: function(operand) { this.write(operand.call(this), this.X); this.PC++; }, //Store X
+        STY: function(operand) { this.write(operand.call(this), this.Y); this.PC++; }, //Store Y
         
         // Arithmetic operations
         ADC: function(operand) { //Add with Carry
-            this.setA(this.A+this.cSignedByte(this.read(operand))+this.getCarry());
-            if (this.setCarry(this.setOverflow(this.A>0x7F))) { this.A-=0x80; }
+            operand = this.read(operand.call(this)) + this.getCarry();
+            this.ALU = this.A + operand;
+            this.setOverflow((this.A^this.ALU) & (operand^this.ALU) & 0x80);
+            if (this.setCarry(this.setA(this.ALU)>0xFF)) this.A-=0x100;
+            this.PC++;
         },
         SBC: function(operand) { //Subtract with Carry
-            this.setA(this.A-this.cSignedByte(this.read(operand))-(1-this.getCarry()));
-            if (this.setCarry(!this.setOverflow(this.A>0x7F))) { this.A-=0x80; }
+            operand = 0x100 - this.read(operand.call(this)) - this.getCarry();
+            this.ALU = this.A + operand;
+            this.setOverflow((this.A^this.ALU) & (operand^this.ALU) & 0x80);
+            if (this.setCarry(this.setA(this.ALU)>0xFF)) this.A-=0x100;
+            this.PC++;
         },
         ASL: function(operand) { //Arithmetic Shift Left
-            if (operand===null) { //Opcode $0A uses the accumulator
+            operand = operand.call(this);
+            if (operand===null) { //Opcode $0A is implied
                 this.setA(this.A*2);
                 if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
             } else {
                 this.setALU(this.read(operand)*2);
                 if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
                 this.write(operand, this.alu);
+                this.PC++;
             }
         },
         LSR: function(operand) { //Logical Shift Right
-            if (operand===null) { //Opcode $4A uses the accumulator
+            operand = operand.call(this);
+            if (operand===null) { //Opcode $4A is implied
                 if (this.setCarry(this.A%2)) { this.A-=1; }
                 this.setA(this.A/2);
             } else {
                 this.alu = this.read(operand);
                 if (this.setCarry(this.alu%2)) { this.alu-=1; }
                 this.write(operand, this.setALU(this.alu/2));
+                this.PC++;
             }
         },
         ROL: function(operand) { //Rotate Left
-            if (operand===null) { //Opcode $2A uses the accumulator
+            operand = operand.call(this);
+            if (operand===null) { //Opcode $2A is implied
                 this.setA(this.A*2+this.getCarry());
                 if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
             } else {
                 this.setALU(this.read(operand)*2+this.getCarry());
                 if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
                 this.write(operand, this.alu);
+                this.PC++;
             }
         },
         ROR: function(operand) { //Rotate Right
-            if (operand===null) { //Opcode $6A uses the accumulator
+            operand = operand.call(this);
+            if (operand===null) { //Opcode $6A is implied
                 this.alu = this.A+(this.getCarry()*0x100);
                 if (this.setCarry(this.alu%2)) { this.alu-=1; }
                 this.setA(this.alu/2);
@@ -359,72 +378,59 @@
                 this.alu = this.read(operand)+(this.getCarry()*0x100);
                 if (this.setCarry(this.alu%2)) { this.alu-=1; }
                 this.write(operand, this.setALU(this.alu/2));
+                this.PC++;
             }
         },
         
-        INC: function(operand) { this.write(this.setALU(this.read(operand)+1)); }, //Increment memory
-        DEC: function(operand) { this.write(this.setALU(this.read(operand)-1)); }, //Decrement memory
-        INX: function(operand) { this.setX(this.X+1); }, //Increment X
-        DEX: function(operand) { this.setX(this.X-1); }, //Decrement X
-        INY: function(operand) { this.setY(this.Y+1); }, //Increment Y
-        DEY: function(operand) { this.setY(this.Y-1); }, //Decrement Y
+        INC: function(operand) { //Increment memory
+            operand = operand.call(this);
+            this.write(operand, this.setALU(this.read(operand)+1));
+            this.PC++;
+        },
+        DEC: function(operand) { //Decrement memory
+            operand = operand.call(this);
+            this.write(operand, this.setALU(this.read(operand)-1));
+            this.PC++;
+        },
+        INX: function(operand) { this.setX((this.X<0xFF) ? this.X+1 : 0x00); }, //Increment X
+        DEX: function(operand) { this.setX((this.X>0x00) ? this.X-1 : 0xFF); }, //Decrement X
+        INY: function(operand) { this.setY((this.Y<0xFF) ? this.Y+1 : 0x00); }, //Increment Y
+        DEY: function(operand) { this.setY((this.Y>0x00) ? this.Y-1 : 0xFF); }, //Decrement Y
         
         BIT: function(operand) { //Bit test
-            this.alu = this.read(operand);
+            this.alu = this.read(operand.call(this));
             if (this.setNegative(this.alu>0x7F)) {
-                this.setOverflow(this.alu>0x3F);
-            } else {
                 this.setOverflow(this.alu>0xBF);
+            } else {
+                this.setOverflow(this.alu>0x3F);
             }
             this.setZero(!(this.A&this.alu));
+            this.PC++;
         },
         CMP: function(operand) { //Compare with Accumulator
-            this.alu = this.read(operand);
+            this.setALU(this.read(operand.call(this)));
             this.setCarry(this.A>=this.alu);
             this.setZero(this.A==this.alu);
-            this.setNegative(this.alu<0);
         },
         CPX: function(operand) { //Compare with X
-            this.alu = this.read(operand);
+            this.setALU(this.read(operand.call(this)));
             this.setCarry(this.X>=this.alu);
             this.setZero(this.X==this.alu);
-            this.setNegative(this.alu<0);
         },
         CPY: function(operand) { //Compare with Y
-            this.alu = this.read(operand);
+            this.setALU(this.read(operand.call(this)));
             this.setCarry(this.Y>=this.alu);
             this.setZero(this.Y==this.alu);
-            this.setNegative(this.alu<0);
         },
         
         // Logical operations
-        ORA: function(operand) { this.setA(this.A|this.read(operand)); }, //Logical OR
-        AND: function(operand) { this.setA(this.A&this.read(operand)); }, //Logical AND
-        EOR: function(operand) { this.setA(this.A^this.read(operand)); }, //Exclusive OR
+        ORA: function(operand) { this.setA(this.A | this.read(operand.call(this))); this.PC++; }, //Logical OR
+        AND: function(operand) { this.setA(this.A & this.read(operand.call(this))); this.PC++; }, //Logical AND
+        EOR: function(operand) { this.setA(this.A ^ this.read(operand.call(this))); this.PC++; }, //Exclusive OR
         
         // Others
-        NOP: function(operand) { return; }, //Do nothing
-        KIL: function(operand) { this.doRESET(); }, //Crashes the machine!
-        
-        opCodeLookup: [
-            Cpu.BRK, Cpu.ORA, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.PHP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP,
-            Cpu.BPL, Cpu.ORA, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP, Cpu.CLC, Cpu.ORA, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.ORA, Cpu.ASL, Cpu.NOP,
-            Cpu.JSR, Cpu.AND, Cpu.KIL, Cpu.NOP, Cpu.BIT, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.PLP, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.BIT, Cpu.AND, Cpu.ROL, Cpu.NOP,
-            Cpu.BMI, Cpu.AND, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.AND, Cpu.ROL, Cpu.NOP, Cpu.SEC, Cpu.AND, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.AND, Cpu.ROL, Cpu.NOP,
-            Cpu.RTI, Cpu.EOR, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.PHA, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.JMP, Cpu.EOR, Cpu.LSR, Cpu.NOP,
-            Cpu.BVC, Cpu.EOR, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP, Cpu.CLI, Cpu.EOR, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.EOR, Cpu.LSR, Cpu.NOP,
-            Cpu.RTS, Cpu.ADC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.PLA, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.JMP, Cpu.ADC, Cpu.ROR, Cpu.NOP,
-            Cpu.BVS, Cpu.ADC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP, Cpu.SEI, Cpu.ADC, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.ADC, Cpu.ROR, Cpu.NOP,
-            Cpu.NOP, Cpu.STA, Cpu.NOP, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP, Cpu.DEY, Cpu.NOP, Cpu.TXA, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP,
-            Cpu.BCC, Cpu.STA, Cpu.KIL, Cpu.NOP, Cpu.STY, Cpu.STA, Cpu.STX, Cpu.NOP, Cpu.TYA, Cpu.STA, Cpu.TXS, Cpu.NOP, Cpu.SHY, Cpu.STA, Cpu.SHX, Cpu.NOP,
-            Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.TAY, Cpu.LDA, Cpu.TAX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP,
-            Cpu.BCS, Cpu.LDA, Cpu.KIL, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP, Cpu.CLV, Cpu.LDA, Cpu.TSX, Cpu.NOP, Cpu.LDY, Cpu.LDA, Cpu.LDX, Cpu.NOP,
-            Cpu.CPY, Cpu.CMP, Cpu.NOP, Cpu.NOP, Cpu.CPY, Cpu.CMP, Cpu.DEC, Cpu.NOP, Cpu.INY, Cpu.CMP, Cpu.DEX, Cpu.NOP, Cpu.CPY, Cpu.CMP, Cpu.DEC, Cpu.NOP,
-            Cpu.BNE, Cpu.CMP, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.CMP, Cpu.DEC, Cpu.NOP, Cpu.CLD, Cpu.CMP, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.CMP, Cpu.DEC, Cpu.NOP,
-            Cpu.CPX, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.CPX, Cpu.SBC, Cpu.INC, Cpu.NOP, Cpu.INX, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.CPX, Cpu.SBC, Cpu.INC, Cpu.NOP,
-            Cpu.BEQ, Cpu.SBC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP, Cpu.SED, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP
-        ],
-        
+        NOP: function(operand) { operand.call(this); }, //Does nothing
+        KIL: function(operand) { this.doRESET(); }      //Crashes the machine!
     }
     
     Nestled.Cpu = Cpu;

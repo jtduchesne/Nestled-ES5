@@ -332,18 +332,18 @@ describe("Nestled", function() {
         context("Addressing modes", function() {
             //They all should return the actual address of the next read
             var operand;
-            beforeEach(function() { subject.PC = 0x8001; });
+            beforeEach(function() { subject.PC = 0x8000; });
             
             describe("#imp()", function() {
-                it("does nothing...", function() {
-                    expect(subject.imp()).to.be; }); //But it does exist
+                it("returns null", function() {
+                    expect(subject.imp()).to.be.null; });
             });
             describe("#imm()", function() {
                 it("returns #PC", function() {
-                    expect(subject.imm()).to.equal(0x8001); });
+                    expect(subject.imm()).to.equal(0x8000); });
             });
             
-            describe("#rel(operand)", function() {
+            describe("#rel(operand)", function() { //PC will be incremented once
                 it("makes PC go forward with a positive operand", function() {
                     expect(subject.rel(1)).to.equal(0x8002) });
                 it("makes PC go forward with a positive signed byte", function() {
@@ -381,28 +381,28 @@ describe("Nestled", function() {
             });
             
             describe("#abs(operand)", function() {
-                beforeEach(function() { operand = subject.read(subject.PC++); });
+                beforeEach(function() { operand = subject.read(subject.PC); });
                 
                 it("returns the operand(word)", function() {
-                    expect(subject.abs(operand)).to.equal(0x3231); });
+                    expect(subject.abs(operand)).to.equal(0x3130); });
             });
             describe("#absX(operand)", function() {
                 beforeEach(function() {
-                    subject.X = 0xF0;
-                    operand = subject.read(subject.PC++);
+                    subject.X = 0xE0;
+                    operand = subject.read(subject.PC);
                 });
                 
                 it("returns the operand(word)", function() {
-                    expect(subject.absX(operand)).to.equal(0x3321); });
+                    expect(subject.absX(operand)).to.equal(0x3210); });
             });
             describe("#absY(operand)", function() {
                 beforeEach(function() {
-                    subject.Y = 0xFF;
-                    operand = subject.read(subject.PC++);
+                    subject.Y = 0xF1;
+                    operand = subject.read(subject.PC);
                 });
                 
                 it("returns the operand(word)", function() {
-                    expect(subject.absY(operand)).to.equal(0x3330); });
+                    expect(subject.absY(operand)).to.equal(0x3221); });
             });
             
             describe("#ind(operand)", function() {
@@ -410,7 +410,7 @@ describe("Nestled", function() {
                     PRGRom[0][4] = 0x00;
                     PRGRom[0][5] = 0x80;
                     subject.PC = 0x8004;
-                    operand = subject.read(subject.PC++);
+                    operand = subject.read(subject.PC);
                 });
                 
                 it("returns the reading(word) of the operand(word)", function() {
@@ -443,6 +443,1338 @@ describe("Nestled", function() {
             it("turns 0x80-0xFF negative", function() {
                 expect(subject.cSignedByte(0x80)).to.equal(-128);
                 expect(subject.cSignedByte(0xFF)).to.equal(-1);
+            });
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        context("Instructions", function() {
+            beforeEach(function() {
+                subject.P  = 0x30; //This is kinda the 'null' P, as bit 4 and 5 are always set...
+                subject.PC = 0x0000;
+            });
+            
+            describe("#BRK()",         function() {
+                beforeEach(function() {
+                    subject.ram = [0x00, 0x00];
+                    subject.doInstruction();
+                });
+                
+                it("pushes P to the stack with B flag set", function() {
+                    var pushedP = subject.pullByte();
+                    expect(pushedP).to.equal(subject.P);
+                    expect(pushedP&0x10).to.be.truthy;
+                });
+                it("pushes PC of the next opcode to the stack", function() {
+                    subject.pullByte(); //Pull P first...
+                    expect(subject.pullWord()).to.equal(0x0001); });
+                it("sets PC to the address at 0xFFFE", function() {
+                    expect(subject.PC).to.equal(0x9ABC); });
+            });
+            describe("#RTI()",         function() {
+                beforeEach(function() {
+                    subject.ram = [0x40, 0x00];
+                    subject.pushWord(0x1234);
+                    subject.pushByte(0x56);
+                    subject.doInstruction();
+                });
+                it("pulls P from stack", function() {
+                    expect(subject.P).to.equal(0x56); });
+                it("pulls PC from stack", function() {
+                    expect(subject.PC).to.equal(0x1234); });
+            });
+            describe("#JSR(absolute)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x20, 0x34, 0x12];
+                    subject.doInstruction();
+                });
+                it("pushes PC (before the second byte of operand) to the stack", function() {
+                    expect(subject.pullWord()).to.equal(0x0001); });
+                it("sets PC to the operand", function() {
+                    expect(subject.PC).to.equal(0x1234); });
+            });
+            describe("#RTS()",         function() {
+                beforeEach(function() {
+                    subject.ram = [0x60, 0x00];
+                    subject.pushWord(0x1234);
+                    subject.doInstruction();
+                });
+                it("pulls PC from stack (and increments it once)", function() {
+                    expect(subject.PC).to.equal(0x1235); });
+            });
+            describe("#JMP(absolute)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x4C, 0x34, 0x12];
+                    subject.doInstruction();
+                });
+                it("sets PC to the operand", function() {
+                    expect(subject.PC).to.equal(0x1234); });
+            });
+            describe("#JMP(indirect)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x6C, 0x03, 0x00, 0x78, 0x56];
+                    subject.doInstruction();
+                });
+                it("sets PC to the address given by the operand", function() {
+                    expect(subject.PC).to.equal(0x5678); });
+            });
+            
+            describe("#BPL(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x10, 0x10];
+                });
+                it("branches if positive", function() {
+                    subject.setNegative(false);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if not positive", function() {
+                    subject.setNegative(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BMI(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x30, 0x10];
+                });
+                it("branches if negative", function() {
+                    subject.setNegative(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if not negative", function() {
+                    subject.setNegative(false);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BVC(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x50, 0x10];
+                });
+                it("branches if Overflow clear", function() {
+                    subject.clrOverflow();
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if Overflow not clear", function() {
+                    subject.setOverflow(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BVS(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x70, 0x10];
+                });
+                it("branches if Overflow set", function() {
+                    subject.setOverflow(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if Overflow not set", function() {
+                    subject.setOverflow(false);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BCC(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x90, 0x10];
+                });
+                it("branches if Carry clear", function() {
+                    subject.clrCarry();
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if Carry not clear", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BCS(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xB0, 0x10];
+                });
+                it("branches if Carry set", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if Carry not set", function() {
+                    subject.setCarry(false);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BNE(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xD0, 0x10];
+                });
+                it("branches if not equal (Z flag clear)", function() {
+                    subject.clrZero();
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if equal (Z flag set)", function() {
+                    subject.setZero(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#BEQ(relative)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xF0, 0x10];
+                });
+                it("branches if equal (Z flag set)", function() {
+                    subject.setZero(true);
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0012); });
+                it("continues to next opcode if not equal (Z flag clear)", function() {
+                    subject.clrZero();
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            
+            describe("#PHA()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x48, 0x00];
+                    subject.A = 0x0A;
+                    subject.doInstruction();
+                });
+                it("pushes A to the stack", function() {
+                    expect(subject.pullByte()).to.equal(0x0A); });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#PHP()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x08, 0x00];
+                    subject.P = 0x05;
+                    subject.doInstruction();
+                });
+                it("pushes P to the stack", function() {
+                    expect(subject.pullByte()).to.equal(0x05); });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#PLA()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x68, 0x00];
+                });
+                it("pulls A from the stack", function() {
+                    subject.pushByte(0xAA);
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xAA); });
+                it("sets Z flag if zero", function() {
+                    subject.pushByte(0x00);
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if negative", function() {
+                    subject.pushByte(-1);
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#PLP()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x28, 0x00];
+                    subject.pushByte(0x55);
+                    subject.doInstruction();
+                });
+                it("pulls P from the stack", function() {
+                    expect(subject.P).to.equal(0x55); });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            
+            describe("#CLC()", function() {
+                beforeEach(function() {
+                    subject.P = 0xFF;
+                    subject.ram = [0x18, 0x00];
+                    subject.doInstruction();
+                });
+                it("clears Carry flag", function() {
+                    expect(subject.P & 0x01).not.to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#CLD()", function() {
+                beforeEach(function() {
+                    subject.P = 0xFF;
+                    subject.ram = [0xD8, 0x00];
+                    subject.doInstruction();
+                });
+                it("clears Decimal flag", function() {
+                    expect(subject.P & 0x08).not.to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#CLI()", function() {
+                beforeEach(function() {
+                    subject.P = 0xFF;
+                    subject.ram = [0x58, 0x00];
+                    subject.doInstruction();
+                });
+                it("clears Interrupt Disable flag", function() {
+                    expect(subject.P & 0x04).not.to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#CLV()", function() {
+                beforeEach(function() {
+                    subject.P = 0xFF;
+                    subject.ram = [0xB8, 0x00];
+                    subject.doInstruction();
+                });
+                it("clears Overflow flag", function() {
+                    expect(subject.P & 0x40).not.to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#SEC()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x38, 0x00];
+                    subject.doInstruction();
+                });
+                it("sets Carry flag", function() {
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#SED()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xF8, 0x00];
+                    subject.doInstruction();
+                });
+                it("sets Decimal flag", function() {
+                    expect(subject.P & 0x08).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#SEI()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x78, 0x00];
+                    subject.doInstruction();
+                });
+                it("sets Interrupt Disable flag", function() {
+                    expect(subject.P & 0x04).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            
+            describe("#TAX()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xAA, 0x00];
+                });
+                it("transfers A to X", function() {
+                    subject.A = 0x0A;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x0A); });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if negative", function() {
+                    subject.A = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#TXA()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x8A, 0x00];
+                });
+                it("transfers X to A", function() {
+                    subject.X = 0x0B;
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0B); });
+                it("sets Z flag if zero", function() {
+                    subject.X = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if negative", function() {
+                    subject.X = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#TAY()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xA8, 0x00];
+                });
+                it("transfers A to Y", function() {
+                    subject.A = 0x0A;
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x0A); });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if negative", function() {
+                    subject.A = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#TYA()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x98, 0x00];
+                });
+                it("transfers Y to A", function() {
+                    subject.Y = 0x0C;
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0C); });
+                it("sets Z flag if zero", function() {
+                    subject.Y = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if negative", function() {
+                    subject.Y = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#TSX()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xBA, 0x00];
+                });
+                it("transfers Stack Pointer to X", function() {
+                    subject.SP = 0x0D;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x0D); });
+                it("sets Z flag if zero", function() {
+                    subject.SP = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.SP = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#TXS()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x9A, 0x00];
+                });
+                it("transfers X to Stack Pointer", function() {
+                    subject.X = 0x0E;
+                    subject.doInstruction();
+                    expect(subject.SP).to.equal(0x0E); });
+                it("does not set Z flag", function() {
+                    subject.X = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).not.to.be.truthy; });
+                it("does not set N flag", function() {
+                    subject.X = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).not.to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            
+            //All the addressing modes are tested here with LDA
+            describe("#LDA(immediate)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xA9, 0x0A];
+                });
+                it("loads a byte into A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[1] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDA(zero)",      function() {
+                beforeEach(function() {
+                    subject.ram = [0xA5, 0x02, 0x0A];
+                });
+                it("loads the addressed byte into A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDA(absolute)",  function() {
+                beforeEach(function() {
+                    subject.ram = [0xAD, 0x03, 0x00, 0x0A];
+                });
+                it("loads the addressed byte into A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0003); });
+            });
+            describe("#LDA(indirectX)", function() {
+                beforeEach(function() {
+                    subject.X = 0x01;
+                    subject.ram = [0xA1, 0x02, 0x00, 0x05, 0x00, 0x0A];
+                });
+                it("loads the addressed byte into A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDA(indirectY)", function() {
+                beforeEach(function() {
+                    subject.Y = 0x01;
+                    subject.ram = [0xB1, 0x03, 0x00, 0x04, 0x00, 0x0A];
+                });
+                it("loads the addressed byte into A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDX(immediate)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xA2, 0x0B];
+                });
+                it("loads a byte into X", function() {
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x0B); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[1] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDX(zeroY)",     function() {
+                beforeEach(function() {
+                    subject.Y = 0x01;
+                    subject.ram = [0xB6, 0x02, 0x00, 0x0B];
+                });
+                it("loads the addressed byte into X", function() {
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x0B); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDX(absoluteY)", function() {
+                beforeEach(function() {
+                    subject.Y = 0x01;
+                    subject.ram = [0xBE, 0x03, 0x00, 0x00, 0x0B];
+                });
+                it("loads the addressed byte into X", function() {
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x0B); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0003); });
+            });
+            describe("#LDY(immediate)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xA0, 0x0C];
+                });
+                it("loads a byte into Y", function() {
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x0C); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[1] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDY(zeroX)",     function() {
+                beforeEach(function() {
+                    subject.X = 0x01;
+                    subject.ram = [0xB4, 0x02, 0x00, 0x0C];
+                });
+                it("loads the addressed byte into Y", function() {
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x0C); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LDY(absoluteX)", function() {
+                beforeEach(function() {
+                    subject.X = 0x01;
+                    subject.ram = [0xBC, 0x03, 0x00, 0x00, 0x0C];
+                });
+                it("loads the addressed byte into Y", function() {
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x0C); });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0003); });
+            });
+            
+            describe("#ADC(immediate)", function() {
+                beforeEach(function() {
+                    subject.A = 0x10;
+                    subject.ram = [0x69, 0x08];
+                });
+                it("adds a byte to A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x18); });
+                it("adds the Carry bit if set", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x19); });
+                it("sets Zero flag if result is zero", function() {
+                    subject.A = 0xF8;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets Negative flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x70;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+                
+                //http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+                context("64 + 16 = 80", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0x10;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x50",       function() { expect(subject.A).to.equal(0x50); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("64 + 80 = 144", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0x50;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x90",       function() { expect(subject.A).to.equal(0x90); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("sets oVerflow flag",   function() { expect(subject.P & 0x40).to.be.truthy });
+                });
+                context("64 + -16 = 48", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0xF0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x30",       function() { expect(subject.A).to.equal(0x30); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("64 + -80 = -16", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0xB0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xF0",       function() { expect(subject.A).to.equal(0xF0); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 + 16 = -32", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0x10;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xE0",       function() { expect(subject.A).to.equal(0xE0); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 + 80 = 32", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0x50;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x20",       function() { expect(subject.A).to.equal(0x20); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 + -16 = -64", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0xF0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xC0",       function() { expect(subject.A).to.equal(0xC0); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 + -80 = -128", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0xB0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x80",       function() { expect(subject.A).to.equal(0x80); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 + -112 = [-> +96 <-]", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0x90;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x60",       function() { expect(subject.A).to.equal(0x60); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("sets oVerflow flag",   function() { expect(subject.P & 0x40).to.be.truthy });
+                    it("clears Negative flag", function() { expect(subject.P & 0x80).to.be.falsy });
+                });
+            });
+            describe("#SBC(immediate)", function() {
+                beforeEach(function() {
+                    subject.A = 0x50;
+                    subject.ram = [0xE9, 0x38];
+                });
+                it("subtracts a byte from A", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x18); });
+                it("subtracts the Carry bit", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x17); });
+                it("sets Zero flag if result is zero", function() {
+                    subject.A = 0x38;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets Negative flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x70;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+                
+                //http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+                context("64 - -16 = 80", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0xF0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x50",       function() { expect(subject.A).to.equal(0x50); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("64 - -80 = [-> -144 <-]", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0xB0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x90",       function() { expect(subject.A).to.equal(0x90); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("sets oVerflow flag",   function() { expect(subject.P & 0x40).to.be.truthy });
+                });
+                context("64 - 48 = 16", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0x30;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x10",       function() { expect(subject.A).to.equal(0x10); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("64 - 112 = -48", function() {
+                    beforeEach(function() {
+                        subject.A      = 0x40;
+                        subject.ram[1] = 0x70;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xD0",       function() { expect(subject.A).to.equal(0xD0); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 - -16 = -32", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0xF0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xE0",       function() { expect(subject.A).to.equal(0xE0); });
+                    it("clears Carry flag",    function() { expect(subject.P & 0x01).to.be.falsy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 - -80 = 32", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0xB0;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x20",       function() { expect(subject.A).to.equal(0x20); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+                context("-48 - 112 = [-> +96 <-]", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0x70;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0x60",       function() { expect(subject.A).to.equal(0x60); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("sets oVerflow flag",   function() { expect(subject.P & 0x40).to.be.truthy });
+                });
+                context("-48 - 48 = -96", function() {
+                    beforeEach(function() {
+                        subject.A      = 0xD0;
+                        subject.ram[1] = 0x30;
+                        subject.doInstruction();
+                    });
+                    it("sets A to 0xA0",       function() { expect(subject.A).to.equal(0xA0); });
+                    it("sets Carry flag",      function() { expect(subject.P & 0x01).to.be.truthy });
+                    it("clears oVerflow flag", function() { expect(subject.P & 0x40).to.be.falsy });
+                });
+            });
+            
+            describe("#ASL()", function() {
+                beforeEach(function() {
+                    subject.A = 0x55;
+                    subject.ram = [0x0A, 0x00];
+                });
+                it("shifts the bits of A to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xAA); });
+                it("sets C flag when exceeded", function() {
+                    subject.A = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.A = 0x40;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#ASL(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x06, 0x02, 0x55];
+                });
+                it("shifts the bits of memory location to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0xAA); });
+                it("sets C flag when exceeded", function() {
+                    subject.ram[2] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[2] = 0x40;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#LSR()", function() {
+                beforeEach(function() {
+                    subject.A = 0xAA;
+                    subject.ram = [0x4A, 0x00];
+                });
+                it("shifts the bits of A to the right", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x55); });
+                it("sets C flag when exceeded", function() {
+                    subject.A = 0x01;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#LSR(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x46, 0x02, 0xAA];
+                });
+                it("shifts the bits of memory location to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0x55); });
+                it("sets C flag when exceeded", function() {
+                    subject.ram[2] = 0x01;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#ROL()", function() {
+                beforeEach(function() {
+                    subject.A = 0x55;
+                    subject.ram = [0x2A, 0x00];
+                });
+                it("shifts the bits of A to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xAA); });
+                it("fills bit0 with the Carry flag", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xAB); });
+                it("sets C flag when exceeded", function() {
+                    subject.A = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.A = 0x40;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#ROL(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x26, 0x02, 0x55];
+                });
+                it("shifts the bits of memory location to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0xAA); });
+                it("fills bit0 with the Carry flag", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0xAB); });
+                it("sets C flag when exceeded", function() {
+                    subject.ram[2] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[2] = 0x40;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#ROR()", function() {
+                beforeEach(function() {
+                    subject.A = 0xAA;
+                    subject.ram = [0x6A, 0x00];
+                });
+                it("shifts the bits of A to the right", function() {
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x55); });
+                it("fills bit7 with the Carry flag", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xD5); });
+                it("sets C flag when exceeded", function() {
+                    subject.A = 0x01;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#ROR(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0x66, 0x02, 0xAA];
+                });
+                it("shifts the bits of memory location to the left", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0x55); });
+                it("fills bit7 with the Carry flag", function() {
+                    subject.setCarry(true);
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0xD5); });
+                it("sets C flag when exceeded", function() {
+                    subject.ram[2] = 0x01;
+                    subject.doInstruction();
+                    expect(subject.P & 0x01).to.be.truthy; });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            
+            describe("#INC(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xE6, 0x02, 0x0F];
+                });
+                it("adds one to memory location", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0x10); });
+                it("cannot go higher than 255", function() {
+                    subject.ram[2] = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0x00); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[2] = 0x7F;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#DEC(zero)", function() {
+                beforeEach(function() {
+                    subject.ram = [0xC6, 0x02, 0x11];
+                });
+                it("subtracts one from memory location", function() {
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0x10); });
+                it("cannot go lower than 0", function() {
+                    subject.ram[2] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.ram[2]).to.equal(0xFF); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[2] = 1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[2] = 0x81;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#INX()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xE8, 0x00];
+                });
+                it("adds one to X", function() {
+                    subject.X = 0x0F;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x10); });
+                it("cannot go higher than 255", function() {
+                    subject.X = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x00); });
+                it("sets Z flag if zero", function() {
+                    subject.X = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.X = 0x7F;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#DEX()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xCA, 0x00];
+                });
+                it("subtracts one from X", function() {
+                    subject.X = 0x11;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0x10); });
+                it("cannot go lower than 0", function() {
+                    subject.X = 0x00;
+                    subject.doInstruction();
+                    expect(subject.X).to.equal(0xFF); });
+                it("sets Z flag if zero", function() {
+                    subject.X = 1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.X = 0x81;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#INY()", function() {
+                beforeEach(function() {
+                    subject.ram = [0xC8, 0x00];
+                });
+                it("adds one to Y", function() {
+                    subject.Y = 0x0F;
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x10); });
+                it("cannot go higher than 255", function() {
+                    subject.Y = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x00); });
+                it("sets Z flag if zero", function() {
+                    subject.Y = -1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.Y = 0x7F;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#DEY()", function() {
+                beforeEach(function() {
+                    subject.ram = [0x88, 0x00];
+                });
+                it("subtracts one from Y", function() {
+                    subject.Y = 0x11;
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0x10); });
+                it("cannot go lower than 0", function() {
+                    subject.Y = 0x00;
+                    subject.doInstruction();
+                    expect(subject.Y).to.equal(0xFF); });
+                it("sets Z flag if zero", function() {
+                    subject.Y = 1;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.Y = 0x81;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            
+            describe("#BIT(zero)",      function() {
+                beforeEach(function() {
+                    subject.ram = [0x24, 0x02, 0x55];
+                });
+                it("sets Z flag if result of the AND is zero", function() {
+                    subject.A = 0xAA;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("clears Z flag if result of the AND is non-zero", function() {
+                    subject.A = 0x44;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.falsy; });
+                it("sets V flag if bit 6 of memory location is set", function() {
+                    subject.ram[2] = 0x40;
+                    subject.doInstruction();
+                    expect(subject.P & 0x40).to.be.truthy; });
+                it("sets N flag if bit 7 of memory location is set", function() {
+                    subject.ram[2] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#CMP(immediate)",      function() {
+                beforeEach(function() {
+                    subject.ram = [0xC9, 0x10];
+                });
+                context("when A > Memory", function() {
+                    beforeEach(function() {
+                        subject.A = 0x18;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                context("when A = Memory", function() {
+                    beforeEach(function() {
+                        subject.A = 0x10;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("sets Z flag",   function() { expect(subject.P & 0x02).to.be.truthy; });
+                });
+                context("when A < Memory", function() {
+                    beforeEach(function() {
+                        subject.A = 0x08;
+                        subject.doInstruction();
+                    });
+                    it("clears C flag", function() { expect(subject.P & 0x01).to.be.falsy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#CPX(immediate)",      function() {
+                beforeEach(function() {
+                    subject.ram = [0xE0, 0x10];
+                });
+                context("when X > Memory", function() {
+                    beforeEach(function() {
+                        subject.X = 0x18;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                context("when X = Memory", function() {
+                    beforeEach(function() {
+                        subject.X = 0x10;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("sets Z flag",   function() { expect(subject.P & 0x02).to.be.truthy; });
+                });
+                context("when X < Memory", function() {
+                    beforeEach(function() {
+                        subject.X = 0x08;
+                        subject.doInstruction();
+                    });
+                    it("clears C flag", function() { expect(subject.P & 0x01).to.be.falsy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            describe("#CPY(immediate)",      function() {
+                beforeEach(function() {
+                    subject.ram = [0xC0, 0x10];
+                });
+                context("when Y > Memory", function() {
+                    beforeEach(function() {
+                        subject.Y = 0x18;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                context("when Y = Memory", function() {
+                    beforeEach(function() {
+                        subject.Y = 0x10;
+                        subject.doInstruction();
+                    });
+                    it("sets C flag",   function() { expect(subject.P & 0x01).to.be.truthy; });
+                    it("sets Z flag",   function() { expect(subject.P & 0x02).to.be.truthy; });
+                });
+                context("when Y < Memory", function() {
+                    beforeEach(function() {
+                        subject.Y = 0x08;
+                        subject.doInstruction();
+                    });
+                    it("clears C flag", function() { expect(subject.P & 0x01).to.be.falsy; });
+                    it("clears Z flag", function() { expect(subject.P & 0x02).to.be.falsy; });
+                });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001); });
+            });
+            
+            describe("#ORA(immediate)", function() {
+                beforeEach(function() {
+                    subject.A = 0xAA;
+                    subject.ram = [0x09, 0x00];
+                });
+                it("does an inclusive OR between A and memory location", function() {
+                    subject.ram[1] = 0x0F;
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xAF); });
+                it("sets Z flag if zero", function() {
+                    subject.A = 0x00;
+                    subject.ram[1] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#AND(immediate)", function() {
+                beforeEach(function() {
+                    subject.A = 0xAA;
+                    subject.ram = [0x29, 0x00];
+                });
+                it("does a logical AND between A and memory location", function() {
+                    subject.ram[1] = 0x0F;
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0x0A); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[1] = 0x00;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x80;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            describe("#EOR(immediate)", function() {
+                beforeEach(function() {
+                    subject.A = 0xAA;
+                    subject.ram = [0x49, 0x00];
+                });
+                it("does an exclusive OR between A and memory location", function() {
+                    subject.ram[1] = 0x0F;
+                    subject.doInstruction();
+                    expect(subject.A).to.equal(0xA5); });
+                it("sets Z flag if zero", function() {
+                    subject.ram[1] = 0xAA;
+                    subject.doInstruction();
+                    expect(subject.P & 0x02).to.be.truthy; });
+                it("sets N flag if bit 7 is set", function() {
+                    subject.ram[1] = 0x7F;
+                    subject.doInstruction();
+                    expect(subject.P & 0x80).to.be.truthy; });
+                it("sets PC to the next opcode", function() {
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0002); });
+            });
+            
+            describe("#NOP()", function() {
+                it("sets PC to the next opcode", function() {
+                    subject.ram = [0xEA, 0x00];
+                    subject.doInstruction();
+                    expect(subject.PC).to.equal(0x0001);
+                });
             });
         });
     });

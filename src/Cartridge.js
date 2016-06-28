@@ -53,7 +53,7 @@
         },
         write: function(address, data) {
             if (address < 0x8000) {
-                this.sram[address & 0x1FFF] = data;
+                this.sram[address & 0x1FFF] = (data & 0xFF);
             }
         }
     }
