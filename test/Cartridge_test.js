@@ -2,16 +2,17 @@ var expect = chai.expect;
 
 describe("Nestled", function() {
     describe(".Cartridge", function() {
-        var subject = new Nestled.Cartridge;
+        var subject;
+        var sram   =  [0x10,0x11,0x12,0x13];
+        var PRGRom = [[0x20,0x21,0x22,0x23],
+                      [0x30,0x31,0x32,0x33]];
+        
+        beforeEach(function() {
+            subject = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom});
+        });
         
         it("can be read",   function() { expect(subject).to.respondTo('read'); });
         it("can be writen", function() { expect(subject).to.respondTo('write'); });
-        
-        beforeEach(function() {
-            subject.sram      = [0x10,0x11,0x12,0x13];
-            subject.PRGRom[0] = [0x20,0x21,0x22,0x23];
-            subject.PRGRom[1] = [0x30,0x31,0x32,0x33];
-        });
         
         context("on creation", function() {
             it("defaults to Mapper 0", function() {
