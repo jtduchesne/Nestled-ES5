@@ -326,5 +326,124 @@ describe("Nestled", function() {
                     expect(subject.clrNegative()).to.be.false; });
             });
         });
+        
+        //-------------------------------------------------------------------------------//
+        
+        context("Addressing modes", function() {
+            //They all should return the actual address of the next read
+            var operand;
+            beforeEach(function() { subject.PC = 0x8001; });
+            
+            describe("#imp()", function() {
+                it("does nothing...", function() {
+                    expect(subject.imp()).to.be; }); //But it does exist
+            });
+            describe("#imm()", function() {
+                it("returns #PC", function() {
+                    expect(subject.imm()).to.equal(0x8001); });
+            });
+            
+            describe("#rel(operand)", function() {
+                it("makes PC go forward with a positive operand", function() {
+                    expect(subject.rel(1)).to.equal(0x8002) });
+                it("makes PC go forward with a positive signed byte", function() {
+                    expect(subject.rel(0x01)).to.equal(0x8002) });
+                it("makes PC go backward with a negative operand", function() {
+                    expect(subject.rel(-1)).to.equal(0x8000) });
+                it("makes PC go backward with a negative signed byte", function() {
+                    expect(subject.rel(0xFF)).to.equal(0x8000) });
+            });
+            
+            describe("#zero(operand)", function() {
+                it("returns the operand", function() {
+                    expect(subject.zero(0x18)).to.equal(0x0018);
+                });
+            });
+            describe("#zeroX(operand)", function() {
+                it("returns the operand + X", function() {
+                    subject.X = 0x80;
+                    expect(subject.zeroX(0x18)).to.equal(0x0098);
+                });
+                it("cannot cross page", function() {
+                    subject.X = 0xF0;
+                    expect(subject.zeroX(0x18)).to.equal(0x0008);
+                });
+            });
+            describe("#zeroY(operand)", function() {
+                it("returns the operand + Y", function() {
+                    subject.Y = 0xC0;
+                    expect(subject.zeroY(0x18)).to.equal(0x00D8);
+                });
+                it("cannot cross page", function() {
+                    subject.Y = 0xF0;
+                    expect(subject.zeroY(0x18)).to.equal(0x0008);
+                });
+            });
+            
+            describe("#abs(operand)", function() {
+                beforeEach(function() { operand = subject.read(subject.PC++); });
+                
+                it("returns the operand(word)", function() {
+                    expect(subject.abs(operand)).to.equal(0x3231); });
+            });
+            describe("#absX(operand)", function() {
+                beforeEach(function() {
+                    subject.X = 0xF0;
+                    operand = subject.read(subject.PC++);
+                });
+                
+                it("returns the operand(word)", function() {
+                    expect(subject.absX(operand)).to.equal(0x3321); });
+            });
+            describe("#absY(operand)", function() {
+                beforeEach(function() {
+                    subject.Y = 0xFF;
+                    operand = subject.read(subject.PC++);
+                });
+                
+                it("returns the operand(word)", function() {
+                    expect(subject.absY(operand)).to.equal(0x3330); });
+            });
+            
+            describe("#ind(operand)", function() {
+                beforeEach(function() {
+                    PRGRom[0][4] = 0x00;
+                    PRGRom[0][5] = 0x80;
+                    subject.PC = 0x8004;
+                    operand = subject.read(subject.PC++);
+                });
+                
+                it("returns the reading(word) of the operand(word)", function() {
+                    expect(subject.ind(operand)).to.equal(0x3130); });
+            });
+            describe("#indX(operand)", function() {
+                beforeEach(function() { subject.X = 0x01; });
+                
+                it("returns the reading of (the operand + X)", function() {
+                    expect(subject.indX(0x00)).to.equal(0x1211); });
+            });
+            describe("#indY(operand)", function() {
+                beforeEach(function() { subject.Y = 0x12; });
+                
+                it("returns (the reading of the operand) + Y", function() {
+                    expect(subject.indY(0x00)).to.equal(0x1122); });
+            });
+        });
+        
+        describe("#cSignedByte(value)", function() {
+            it("keeps negative numbers negative", function() {
+                var number=-1;
+                expect(subject.cSignedByte(number)).to.equal(number);
+            });
+            it("keeps 0x00-0x7F positive", function() {
+                [0x00, 0x01, 0x7F].forEach(function(number) {
+                    expect(subject.cSignedByte(number)).to.equal(number);
+                });
+            });
+            it("turns 0x80-0xFF negative", function() {
+                expect(subject.cSignedByte(0x80)).to.equal(-128);
+                expect(subject.cSignedByte(0xFF)).to.equal(-1);
+            });
+        });
     });
 });

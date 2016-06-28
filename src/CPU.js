@@ -26,6 +26,26 @@
         //Pre-allocated buffer for arithmetic operations
         this.alu = 0;
         
+        //Addressing modes lookup table
+        this.addressLookup = [
+            this.imp, this.indX, this.imp, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX,
+            this.abs, this.indX, this.imp, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX,
+            this.imp, this.indX, this.imp, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX,
+            this.imp, this.indX, this.imp, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.ind,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX,
+            this.imm, this.indX, this.imm, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroY, this.zeroY, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absY, this.absY,
+            this.imm, this.indX, this.imm, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroY, this.zeroY, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absY, this.absY,
+            this.imm, this.indX, this.imm, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX,
+            this.imm, this.indX, this.imm, this.indX, this.zero,  this.zero,  this.zero,  this.zero,  this.imp, this.imm,  this.imp, this.imm,  this.abs,  this.abs,  this.abs,  this.abs,
+            this.rel, this.indY, this.imp, this.indY, this.zeroX, this.zeroX, this.zeroX, this.zeroX, this.imp, this.absY, this.imp, this.absY, this.absX, this.absX, this.absX, this.absX
+        ];
+        
         //Initial RESET
         if (this.cartridge) { this.doRESET(); }
     }
@@ -173,8 +193,8 @@
         
         //== Addressing Modes ===========================================//
         
-        imp:   function(operand) { return null; },            //Implied
-        imm:   function(operand) { return this.PC; },         //Immediate - #00
+        imp:   function(operand) { return null; },    //Implied
+        imm:   function(operand) { return this.PC; }, //Immediate - #00
         
         rel:   function(operand) { return this.PC+this.cSignedByte(operand); }, //Relative - ±#00
         
@@ -182,33 +202,19 @@
         zeroX: function(operand) { return (operand + this.X) & 0xFF; }, //Zero Page indexed X - $00+X
         zeroY: function(operand) { return (operand + this.Y) & 0xFF; }, //Zero Page indexed Y - $00+Y
         
-        abs:   function(operand) { return operand + (this.read(++this.PC) << 8); }, //Absolute - $0000
-        absX:  function(operand) { return this.abs(operand) + this.X; },            //Absolute indexed X - $0000+X
-        absY:  function(operand) { return this.abs(operand) + this.Y; },            //Absolute indexed Y - $0000+Y
+        abs:   function(operand) { return operand + (this.read(this.PC++) * 256); }, //Absolute - $0000
+        absX:  function(operand) { return this.abs(operand) + this.X; },             //Absolute indexed X - $0000+X
+        absY:  function(operand) { return this.abs(operand) + this.Y; },             //Absolute indexed Y - $0000+Y
         
+        ind:   function(operand) { //Indirect - ($0000)
+            return this.readWord(this.abs(operand)); },
+        indX:  function(operand) { //Indirect indexed X - ($00+X)
+            return this.read(this.zeroX(operand)) + (this.read(this.zeroX(operand+1)) * 256); },
+        indY:  function(operand) { //Indirect indexed Y - ($00)+Y
+            return this.readWord(operand) + this.Y; },
         
-        ind:   function(operand) { return this.readWord(this.abs(operand)); },                                         //Indirect - ($0000)
-        indX:  function(operand) { return this.read(this.zeroX(operand)) + (this.read(this.zeroX(operand+1)) << 8); }, //Indirect indexed X - ($00+X)
-        indY:  function(operand) { return this.read(this.zero(operand) + (this.zero(operand+1) << 8) + this.Y); },     //Indirect indexed Y - ($00)+Y
-        
-        addressLookup: [
-            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
-            Cpu.abs, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
-            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
-            Cpu.imp, Cpu.indX, Cpu.imp, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.ind,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
-            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroY, Cpu.zeroY, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absY, Cpu.absY,
-            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroY, Cpu.zeroY, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absY, Cpu.absY,
-            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX,
-            Cpu.imm, Cpu.indX, Cpu.imm, Cpu.indX, Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.zero,  Cpu.imp, Cpu.imm,  Cpu.imp, Cpu.imm,  Cpu.abs,  Cpu.abs,  Cpu.abs,  Cpu.abs,
-            Cpu.rel, Cpu.indY, Cpu.imp, Cpu.indY, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.zeroX, Cpu.imp, Cpu.absY, Cpu.imp, Cpu.absY, Cpu.absX, Cpu.absX, Cpu.absX, Cpu.absX
-        ],
+        //Helper function to convert signed bytes to javascript's native numbers
+        cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; },
         
         //== OpCodes ====================================================//
         
@@ -412,8 +418,6 @@
             Cpu.BEQ, Cpu.SBC, Cpu.KIL, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP, Cpu.SED, Cpu.SBC, Cpu.NOP, Cpu.NOP, Cpu.NOP, Cpu.SBC, Cpu.INC, Cpu.NOP
         ],
         
-        //Helper function to make javascript's native 64bit floating point numbers look like signed bytes
-        cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; }
     }
     
     Nestled.Cpu = Cpu;
