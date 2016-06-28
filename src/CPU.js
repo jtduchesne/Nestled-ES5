@@ -50,17 +50,17 @@
         
         //== Interrupts =================================================//
         doNMI: function() {
-            this.pushWord(this.PC+=2);
+            this.pushWord(this.PC);
             this.pushByte(this.P & ~0x10);
             this.PC = this.readWord(0xFFFA);
         },
-        doRESET: function()  {
-            this.SP = (this.SP+=3) & 0xFF;
+        doRESET: function() {
+            this.SP = (this.SP+3) & 0xFF;
             this.setInterrupt();
             this.PC = this.readWord(0xFFFC);
         },
-        doIRQ: function()  {
-            this.pushWord(this.PC+=2);
+        doIRQ: function() {
+            this.pushWord(this.PC);
             this.pushByte(this.P & ~0x10);
             this.PC = this.readWord(0xFFFE);
         },
@@ -104,18 +104,20 @@
         
         //== Stack ======================================================//
         pushByte: function(value) {
-            this.ram[0x100 + (--this.SP & 0xFF)] = value;
+            this.ram[0x100 + (this.SP = this.SP-1 & 0xFF)] = value;
         },
         pushWord: function(value) {
-            this.ram[0x100 + (--this.SP & 0xFF)] = (value >> 8);
-            this.ram[0x100 + (--this.SP & 0xFF)] = (value & 0xFF);
+            this.pushByte(value >> 8);
+            this.pushByte(value & 0xFF);
         },
         
-        popByte: function() {
-            return this.ram[0x100 + (this.SP++ & 0xFF)];
+        pullByte: function() {
+            this.alu = this.ram[0x100 + this.SP]
+            this.SP = this.SP+1 & 0xFF;
+            return this.alu;
         },
-        popWord: function() {
-            return this.popByte + (this.popByte << 8);
+        pullWord: function() {
+            return this.pullByte() + (this.pullByte() << 8);
         },
         
         //== Registers ==================================================//
