@@ -23,6 +23,10 @@
         //RAM
         this.ram = new Array(0x800);
         
+        //Pre-allocated buffers for opcode and operand fetch
+        this.opcode = 0;
+        this.operand = 0;
+        
         //Pre-allocated buffer for arithmetic operations
         this.alu = 0;
         
@@ -53,19 +57,22 @@
     Cpu.prototype = {
         constructor: Cpu,
         
-        tickPerFrame: 21477272/12/60, //Hardcoded to NTSC for now...
+        ticksPerFrame: 21477272/12/60, //Hardcoded to NTSC for now...
         
         //== Main loop ==================================================//
         emulateFrame: function() {
             if (!this.busy) {
                 this.busy = true;
-                while(this.tick<=this.tickPerFrame) {
-                    this.opCodeLookup[this.read(this.PC)](
-                        this.addressLookup[this.PC](this.read(++this.PC))
-                    );
-                }
+                while(this.tick < this.ticksPerFrame)
+                    doInstruction();
+                this.tick -= this.ticksPerFrame;
                 this.busy = false;
             }
+        },
+        doInstruction: function() {
+            this.opcode  = this.read(this.PC++);
+            this.operand = this.read(this.PC++);
+            this.instructionLookup[this.opcode].call(this, this.addressLookup[this.opcode].call(this, this.operand));
         },
         
         //== Interrupts =================================================//
