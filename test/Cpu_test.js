@@ -470,6 +470,7 @@ describe("Nestled", function() {
                     expect(subject.pullWord()).to.equal(0x0001); });
                 it("sets PC to the address at 0xFFFE", function() {
                     expect(subject.PC).to.equal(0x9ABC); });
+                it("takes 7 cycles", function() { expect(subject.tick).to.equal(7); });
             });
             describe("#RTI()",         function() {
                 beforeEach(function() {
@@ -482,6 +483,7 @@ describe("Nestled", function() {
                     expect(subject.P).to.equal(0x56); });
                 it("pulls PC from stack", function() {
                     expect(subject.PC).to.equal(0x1234); });
+                it("takes 6 cycles", function() { expect(subject.tick).to.equal(6); });
             });
             describe("#JSR(absolute)", function() {
                 beforeEach(function() {
@@ -492,6 +494,7 @@ describe("Nestled", function() {
                     expect(subject.pullWord()).to.equal(0x0001); });
                 it("sets PC to the operand", function() {
                     expect(subject.PC).to.equal(0x1234); });
+                it("takes 6 cycles", function() { expect(subject.tick).to.equal(6); });
             });
             describe("#RTS()",         function() {
                 beforeEach(function() {
@@ -501,6 +504,7 @@ describe("Nestled", function() {
                 });
                 it("pulls PC from stack (and increments it once)", function() {
                     expect(subject.PC).to.equal(0x1235); });
+                it("takes 6 cycles", function() { expect(subject.tick).to.equal(6); });
             });
             describe("#JMP(absolute)", function() {
                 beforeEach(function() {
@@ -509,6 +513,7 @@ describe("Nestled", function() {
                 });
                 it("sets PC to the operand", function() {
                     expect(subject.PC).to.equal(0x1234); });
+                it("takes 3 cycles", function() { expect(subject.tick).to.equal(3); });
             });
             describe("#JMP(indirect)", function() {
                 beforeEach(function() {
@@ -517,111 +522,207 @@ describe("Nestled", function() {
                 });
                 it("sets PC to the address given by the operand", function() {
                     expect(subject.PC).to.equal(0x5678); });
+                it("takes 5 cycles", function() { expect(subject.tick).to.equal(5); });
             });
             
             describe("#BPL(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0x10, 0x10];
                 });
-                it("branches if positive", function() {
-                    subject.setNegative(false);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if not positive", function() {
-                    subject.setNegative(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if positive", function() {
+                    beforeEach(function() {
+                        subject.setNegative(false);
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if not positive", function() {
+                    beforeEach(function() {
+                        subject.setNegative(true);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BMI(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0x30, 0x10];
                 });
-                it("branches if negative", function() {
-                    subject.setNegative(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if not negative", function() {
-                    subject.setNegative(false);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if negative", function() {
+                    beforeEach(function() {
+                        subject.setNegative(true);
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if not negative", function() {
+                    beforeEach(function() {
+                        subject.setNegative(false);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BVC(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0x50, 0x10];
                 });
-                it("branches if Overflow clear", function() {
-                    subject.clrOverflow();
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if Overflow not clear", function() {
-                    subject.setOverflow(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if oVerflow clear", function() {
+                    beforeEach(function() {
+                        subject.clrOverflow();
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if oVerflow not clear", function() {
+                    beforeEach(function() {
+                        subject.setOverflow(true);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BVS(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0x70, 0x10];
                 });
-                it("branches if Overflow set", function() {
-                    subject.setOverflow(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if Overflow not set", function() {
-                    subject.setOverflow(false);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if oVerflow set", function() {
+                    beforeEach(function() {
+                        subject.setOverflow(true);
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if oVerflow not set", function() {
+                    beforeEach(function() {
+                        subject.setOverflow(false);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BCC(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0x90, 0x10];
                 });
-                it("branches if Carry clear", function() {
-                    subject.clrCarry();
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if Carry not clear", function() {
-                    subject.setCarry(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if Carry clear", function() {
+                    beforeEach(function() {
+                        subject.clrCarry();
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if Carry not clear", function() {
+                    beforeEach(function() {
+                        subject.setCarry(true);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BCS(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0xB0, 0x10];
                 });
-                it("branches if Carry set", function() {
-                    subject.setCarry(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if Carry not set", function() {
-                    subject.setCarry(false);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if Carry set", function() {
+                    beforeEach(function() {
+                        subject.setCarry(true);
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if Carry not set", function() {
+                    beforeEach(function() {
+                        subject.setCarry(false);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BNE(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0xD0, 0x10];
                 });
-                it("branches if not equal (Z flag clear)", function() {
-                    subject.clrZero();
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if equal (Z flag set)", function() {
-                    subject.setZero(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if not equal (Z flag clear)", function() {
+                    beforeEach(function() {
+                        subject.clrZero();
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if equal (Z flag set)", function() {
+                    beforeEach(function() {
+                        subject.setZero(true);
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             describe("#BEQ(relative)", function() {
                 beforeEach(function() {
                     subject.ram = [0xF0, 0x10];
                 });
-                it("branches if equal (Z flag set)", function() {
-                    subject.setZero(true);
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0012); });
-                it("continues to next opcode if not equal (Z flag clear)", function() {
-                    subject.clrZero();
-                    subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0002); });
+                context("if equal (Z flag set)", function() {
+                    beforeEach(function() {
+                        subject.setZero(true);
+                        subject.doInstruction();
+                    });
+                    it("branches", function() {
+                        expect(subject.PC).to.equal(0x0012); });
+                    it("takes 3 cycles", function() {
+                        expect(subject.tick).to.equal(3); });
+                });
+                context("if not equal (Z flag clear)", function() {
+                    beforeEach(function() {
+                        subject.clrZero();
+                        subject.doInstruction();
+                    });
+                    it("continues to next opcode", function() {
+                        expect(subject.PC).to.equal(0x0002); });
+                    it("takes 2 cycles", function() {
+                        expect(subject.tick).to.equal(2); });
+                });
             });
             
             describe("#PHA()", function() {
@@ -634,6 +735,7 @@ describe("Nestled", function() {
                     expect(subject.pullByte()).to.equal(0x0A); });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 3 cycles", function() { expect(subject.tick).to.equal(3); });
             });
             describe("#PHP()", function() {
                 beforeEach(function() {
@@ -645,6 +747,7 @@ describe("Nestled", function() {
                     expect(subject.pullByte()).to.equal(0x05); });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 3 cycles", function() { expect(subject.tick).to.equal(3); });
             });
             describe("#PLA()", function() {
                 beforeEach(function() {
@@ -665,6 +768,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
             });
             describe("#PLP()", function() {
                 beforeEach(function() {
@@ -676,6 +782,7 @@ describe("Nestled", function() {
                     expect(subject.P).to.equal(0x55); });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 4 cycles", function() { expect(subject.tick).to.equal(4); });
             });
             
             describe("#CLC()", function() {
@@ -685,9 +792,10 @@ describe("Nestled", function() {
                     subject.doInstruction();
                 });
                 it("clears Carry flag", function() {
-                    expect(subject.P & 0x01).not.to.be.truthy; });
+                    expect(subject.P & 0x01).to.be.falsy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#CLD()", function() {
                 beforeEach(function() {
@@ -696,9 +804,10 @@ describe("Nestled", function() {
                     subject.doInstruction();
                 });
                 it("clears Decimal flag", function() {
-                    expect(subject.P & 0x08).not.to.be.truthy; });
+                    expect(subject.P & 0x08).to.be.falsy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#CLI()", function() {
                 beforeEach(function() {
@@ -707,9 +816,10 @@ describe("Nestled", function() {
                     subject.doInstruction();
                 });
                 it("clears Interrupt Disable flag", function() {
-                    expect(subject.P & 0x04).not.to.be.truthy; });
+                    expect(subject.P & 0x04).to.be.falsy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#CLV()", function() {
                 beforeEach(function() {
@@ -718,9 +828,10 @@ describe("Nestled", function() {
                     subject.doInstruction();
                 });
                 it("clears Overflow flag", function() {
-                    expect(subject.P & 0x40).not.to.be.truthy; });
+                    expect(subject.P & 0x40).to.be.falsy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#SEC()", function() {
                 beforeEach(function() {
@@ -731,6 +842,7 @@ describe("Nestled", function() {
                     expect(subject.P & 0x01).to.be.truthy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#SED()", function() {
                 beforeEach(function() {
@@ -741,6 +853,7 @@ describe("Nestled", function() {
                     expect(subject.P & 0x08).to.be.truthy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             describe("#SEI()", function() {
                 beforeEach(function() {
@@ -751,6 +864,7 @@ describe("Nestled", function() {
                     expect(subject.P & 0x04).to.be.truthy; });
                 it("sets PC to the next opcode", function() {
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() { expect(subject.tick).to.equal(2); });
             });
             
             describe("#TAX()", function() {
@@ -772,6 +886,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#TXA()", function() {
                 beforeEach(function() {
@@ -792,6 +909,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#TAY()", function() {
                 beforeEach(function() {
@@ -812,6 +932,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#TYA()", function() {
                 beforeEach(function() {
@@ -832,6 +955,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#TSX()", function() {
                 beforeEach(function() {
@@ -852,6 +978,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#TXS()", function() {
                 beforeEach(function() {
@@ -872,9 +1001,12 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             
-            //All the addressing modes are tested here with LDA
+            //All the addressing modes are tested here with #LDA, #LDX and #LDY
             describe("#LDA(immediate)", function() {
                 beforeEach(function() {
                     subject.ram = [0xA9, 0x0A];
@@ -893,6 +1025,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#LDA(zero)",      function() {
                 beforeEach(function() {
@@ -904,6 +1039,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 3 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(3); });
             });
             describe("#LDA(absolute)",  function() {
                 beforeEach(function() {
@@ -915,6 +1053,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0003); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
             });
             describe("#LDA(indirectX)", function() {
                 beforeEach(function() {
@@ -927,6 +1068,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 6 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(6); });
             });
             describe("#LDA(indirectY)", function() {
                 beforeEach(function() {
@@ -939,6 +1083,13 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
+                it("takes 6 cycles if page crossed", function() {
+                    subject.Y = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(6); });
             });
             describe("#LDX(immediate)", function() {
                 beforeEach(function() {
@@ -958,6 +1109,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#LDX(zeroY)",     function() {
                 beforeEach(function() {
@@ -970,6 +1124,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
             });
             describe("#LDX(absoluteY)", function() {
                 beforeEach(function() {
@@ -982,6 +1139,13 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0003); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
+                it("takes 5 cycles if page crossed", function() {
+                    subject.Y = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#LDY(immediate)", function() {
                 beforeEach(function() {
@@ -1001,6 +1165,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#LDY(zeroX)",     function() {
                 beforeEach(function() {
@@ -1013,6 +1180,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
             });
             describe("#LDY(absoluteX)", function() {
                 beforeEach(function() {
@@ -1025,6 +1195,13 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0003); });
+                it("takes 4 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(4); });
+                it("takes 5 cycles if page crossed", function() {
+                    subject.X = 0xFF;
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             
             describe("#ADC(immediate)", function() {
@@ -1050,6 +1227,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
                 
                 //http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
                 context("64 + 16 = 80", function() {
@@ -1167,6 +1347,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
                 
                 //http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
                 context("64 - -16 = 80", function() {
@@ -1274,6 +1457,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#ASL(zero)", function() {
                 beforeEach(function() {
@@ -1297,6 +1483,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#LSR()", function() {
                 beforeEach(function() {
@@ -1317,6 +1506,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#LSR(zero)", function() {
                 beforeEach(function() {
@@ -1336,6 +1528,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#ROL()", function() {
                 beforeEach(function() {
@@ -1364,6 +1559,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#ROL(zero)", function() {
                 beforeEach(function() {
@@ -1391,6 +1589,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#ROR()", function() {
                 beforeEach(function() {
@@ -1415,6 +1616,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#ROR(zero)", function() {
                 beforeEach(function() {
@@ -1438,6 +1642,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             
             describe("#INC(zero)", function() {
@@ -1462,6 +1669,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#DEC(zero)", function() {
                 beforeEach(function() {
@@ -1485,6 +1695,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 5 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(5); });
             });
             describe("#INX()", function() {
                 beforeEach(function() {
@@ -1509,6 +1722,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#DEX()", function() {
                 beforeEach(function() {
@@ -1533,6 +1749,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#INY()", function() {
                 beforeEach(function() {
@@ -1557,6 +1776,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#DEY()", function() {
                 beforeEach(function() {
@@ -1581,6 +1803,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             
             describe("#BIT(zero)",      function() {
@@ -1606,8 +1831,11 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 3 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(3); });
             });
-            describe("#CMP(immediate)",      function() {
+            describe("#CMP(immediate)", function() {
                 beforeEach(function() {
                     subject.ram = [0xC9, 0x10];
                 });
@@ -1638,8 +1866,11 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
-            describe("#CPX(immediate)",      function() {
+            describe("#CPX(immediate)", function() {
                 beforeEach(function() {
                     subject.ram = [0xE0, 0x10];
                 });
@@ -1670,8 +1901,11 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
-            describe("#CPY(immediate)",      function() {
+            describe("#CPY(immediate)", function() {
                 beforeEach(function() {
                     subject.ram = [0xC0, 0x10];
                 });
@@ -1702,6 +1936,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             
             describe("#ORA(immediate)", function() {
@@ -1725,6 +1962,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#AND(immediate)", function() {
                 beforeEach(function() {
@@ -1746,6 +1986,9 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             describe("#EOR(immediate)", function() {
                 beforeEach(function() {
@@ -1767,14 +2010,20 @@ describe("Nestled", function() {
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
                     expect(subject.PC).to.equal(0x0002); });
+                it("takes 2 cycles", function() {
+                    subject.doInstruction();
+                    expect(subject.tick).to.equal(2); });
             });
             
             describe("#NOP()", function() {
-                it("sets PC to the next opcode", function() {
+                beforeEach(function() {
                     subject.ram = [0xEA, 0x00];
                     subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0001);
                 });
+                it("sets PC to the next opcode", function() {
+                    expect(subject.PC).to.equal(0x0001); });
+                it("takes 2 cycles", function() {
+                    expect(subject.tick).to.equal(2); });
             });
         });
     });

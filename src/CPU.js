@@ -78,6 +78,14 @@
         constructor: Cpu,
         
         ticksPerFrame: 21477272/12/60, //Hardcoded to NTSC for now...
+        cyclesLookup: [7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+                       6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+                       6,6,2,8,3,3,5,5,3,2,2,2,3,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+                       6,6,2,8,3,3,5,5,4,2,2,2,5,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+                       2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4, 2,6,2,6,4,4,4,4,2,5,2,5,5,5,5,5,
+                       2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4, 2,5,2,5,4,4,4,4,2,4,2,4,4,4,4,4,
+                       2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+                       2,6,3,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7],
         
         //== Main loop ==================================================//
         emulateFrame: function() {
@@ -95,6 +103,7 @@
             this.instructionLookup[this.opcode].call(this, function() {
                 return this.addressLookup[this.opcode].call(this, this.operand);
             });
+            this.tick += this.cyclesLookup[this.opcode];
         },
         
         //== Interrupts =================================================//
@@ -215,16 +224,23 @@
         zeroX: function(operand) { return this.zero(operand + this.X); }, //Zero Page indexed X - $00+X
         zeroY: function(operand) { return this.zero(operand + this.Y); }, //Zero Page indexed Y - $00+Y
         
-        abs:   function(operand) { return operand + (this.read(++this.PC) * 256); }, //Absolute - $0000
-        absX:  function(operand) { return this.abs(operand) + this.X; },             //Absolute indexed X - $0000+X
-        absY:  function(operand) { return this.abs(operand) + this.Y; },             //Absolute indexed Y - $0000+Y
+        abs:   function(operand) { //Absolute - $0000
+            return operand + (this.read(++this.PC) * 256); },
+        absX:  function(operand) { //Absolute indexed X - $0000+X
+            if (operand + this.X > 0xFF) this.tick++;
+            return this.abs(operand) + this.X; },
+        absY:  function(operand) { //Absolute indexed Y - $0000+Y
+            if (operand + this.Y > 0xFF) this.tick++;
+            return this.abs(operand) + this.Y; },
         
         ind:   function(operand) { //Indirect - ($0000)
             return this.readWord(this.abs(operand)); },
         indX:  function(operand) { //Indirect indexed X - ($00+X)
             return this.read(this.zeroX(operand)) + (this.read(this.zeroX(operand+1)) * 256); },
         indY:  function(operand) { //Indirect indexed Y - ($00)+Y
-            return this.readWord(operand) + this.Y; },
+            operand = this.readWord(operand);
+            if ((operand&0xFF) + this.Y > 0xFF) this.tick++;
+            return operand + this.Y; },
         
         //Helper function to convert signed bytes to javascript's native numbers
         cSignedByte: function(value) { return value>0x7F ? value-0x100 : value; },
@@ -254,35 +270,59 @@
         
         // Branching
         BPL: function(operand) { //Branch if Positive
-            if (!this.getNegative()) this.PC = operand.call(this);
+            if (!this.getNegative()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BMI: function(operand) { //Branch if Negative
-            if (this.getNegative()) this.PC = operand.call(this);
+            if (this.getNegative()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BVC: function(operand) { //Branch if oVerflow Clear
-            if (!this.getOverflow()) this.PC = operand.call(this);
+            if (!this.getOverflow()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BVS: function(operand) { //Branch if oVerflow Set
-            if (this.getOverflow()) this.PC = operand.call(this);
+            if (this.getOverflow()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BCC: function(operand) { //Branch if Carry Clear
-            if (!this.getCarry()) this.PC = operand.call(this);
+            if (!this.getCarry()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BCS: function(operand) { //Branch if Carry Set
-            if (this.getCarry()) this.PC = operand.call(this);
+            if (this.getCarry()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BNE: function(operand) { //Branch if Not Equal
-            if (!this.getZero()) this.PC = operand.call(this);
+            if (!this.getZero()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         BEQ: function(operand) { //Branch if Equal
-            if (this.getZero()) this.PC = operand.call(this);
+            if (this.getZero()) {
+                this.PC = operand.call(this);
+                this.tick++;
+            }
             else this.PC++;
         },
         
