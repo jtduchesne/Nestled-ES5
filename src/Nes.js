@@ -21,11 +21,11 @@
         var isPowered = false;
         var mainLoop = null;
         this.powerOn  = function() {
-            //mainLoop = setInterval(function() { cpu.emulateFrame(); }, 1000/60);
+            mainLoop = setInterval(function() { cpu.emulateFrame(); }, 1000/60);
             return isPowered = true;
         };
         this.powerOff = function() {
-            //clearInterval(mainLoop);
+            clearInterval(mainLoop);
             return isPowered = false;
         };
         this.isPoweredOn  = function() { return isPowered; };
@@ -46,7 +46,7 @@
             return this.isPoweredOn();
         },
         pressReset: function()  {
-            //this.cpu.triggerRESET();
+            this.cpu.doRESET();
         },
         
         //== Front red LED ===============================//

@@ -4,6 +4,8 @@ describe("Nestled", function() {
     describe(".Nes", function() {
         var subject = new Nestled.Nes;
         
+        afterEach(function() { subject.powerOff(); });
+        
         it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });
         it("can be turned off", function() { expect(subject).to.respondTo('powerOff'); });
         

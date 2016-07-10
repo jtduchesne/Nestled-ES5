@@ -4,7 +4,7 @@
     function Cpu(cartridge) {
         this.cartridge = cartridge;
         
-        this.busy = true;
+        this.busy = false;
         this.tick = 0;
         
         //Accumulator
