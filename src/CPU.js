@@ -1,6 +1,10 @@
 "use strict";
 
 (function(Nestled, undefined) {
+    /*
+    Cpu properties:
+      cartridge => Nestled.Cartridge
+    */
     function Cpu(cartridge) {
         this.cartridge = cartridge;
         
