@@ -3,6 +3,10 @@
 (function(Nestled, undefined) {
     /*
     Cartridge properties:
+      file   => File object (Can only be passed as argument to constructor,
+                             all the properties from the file will be overriden by
+                             those set manually)
+      name => String
       PRGRom => Array of Blob (1 blob for each 16kb PRG-ROM pages)
       CHRRom => Array of Blob (1 blob for each 8kb CHR-ROM pages)
       mapperNumber => Number (http://wiki.nesdev.com/w/index.php/Mapper)
@@ -12,9 +16,21 @@
       sramEnabled => Boolean
     */
     function Cartridge(opts) {
-        this.PRGRom = (opts && opts['PRGRom']) || [];
-        this.CHRRom = (opts && opts['CHRRom']) || [];
-        this.highPRGPageIndex = this.PRGRom.length - 1;
+        if (opts && opts['file'])
+            this.createFromFile(file);
+        
+        this.name = opts && opts['name'];
+        this.clearPRGData();
+        this.clearCHRData();
+        var pageIndex;
+        if (opts && opts['PRGRom']) {
+            for (pageIndex = 0; pageIndex < opts['PRGRom'].length; pageIndex++)
+                this.addPRGData(opts['PRGRom'][pageIndex]);
+        }
+        if (opts && opts['CHRRom']) {
+            for (pageIndex = 0; pageIndex < opts['CHRRom'].length; pageIndex++)
+                this.addCHRData(opts['CHRRom'][pageIndex]);
+        }
         
         this.mapperNumber = (opts && opts['mapperNumber']) || 0;
         
@@ -27,6 +43,72 @@
 
     Cartridge.prototype = {
         constructor: Cartridge,
+        
+        addPRGData: function(data) {
+            this.PRGRom.push(data);
+            this.highPRGPageIndex = this.PRGRom.length - 1;
+        },
+        clearPRGData: function() {
+            this.PRGRom = [];
+            this.highPRGPageIndex = null;
+        },
+        addCHRData: function(data) {
+            this.CHRRom.push(data);
+        },
+        clearCHRData: function() {
+            this.CHRRom = [];
+        },
+        
+        createFromFile: function(file) {
+            if (file.isValid) {
+                var header = new Uint8Array(file.data.slice(0, 16));
+                
+                file.updateStatus("Verifying " + file.name + "...");
+                var signature = new Uint32Array(header.buffer)[0];
+                if (signature != 0x1A53454E) { //"NES" followed by MS-DOS end-of-file
+                    file.updateStatus("Invalid format", true);
+                    return false;
+                } else
+                    file.updateStatus("iNES format", true);
+                
+                file.updateStatus("Reading header...");
+                this.horizontalMirroring = !!(header[6]&0x1);
+                this.verticalMirroring   =  !(header[6]&0x1);
+                this.sramEnabled         = !!(header[6]&0x2);
+                this.fourscreenMirroring = !!(header[6]&0x8);
+            
+                this.mapperNumber = (header[6]>>4) + (header[7]&0xF0);
+                file.updateStatus((new Nestled.Mapper).getFormattedName(this.mapperNumber), true)
+            
+                var curPos = 0x10;
+                if (header[6]&0x4) curPos += 0x200;
+                
+                file.updateStatus("Reading data...");
+                
+                this.clearPRGData();
+                for (var prgromPage = 0; prgromPage < header[4]; prgromPage++) {
+                    this.addPRGData(file.data.slice(curPos, curPos+0x8000));
+                    curPos += 0x8000; }
+                file.updateStatus(prgromPage*16 + "kb of PRG-Rom", true)
+                
+                this.clearCHRData();
+                for (var chrromPage = 0; chrromPage < header[5]; chrromPage++) {
+                    this.addCHRData(file.data.slice(curPos, curPos+0x4000));
+                    curPos += 0x4000; }
+                file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true)
+            
+                if (curPos < file.data.byteLength)
+                    this.name = String.fromCharCode.apply(null, new Uint8Array(file.data.slice(curPos))).replace(/\0/g, '');
+                else
+                    this.name = file.name;
+            
+                file.updateStatus("Successfully loaded " + this.name)
+                return true;
+            } else {
+                file.updateStatus(file.name + " is invalid");
+                return false;
+            }
+        },
         
         //== Memory access ==============================================//
         read: function(address) {
