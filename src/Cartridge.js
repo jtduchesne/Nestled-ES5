@@ -7,8 +7,9 @@
                              all the properties from the file will be overriden by
                              those set manually)
       name => String
-      PRGRom => Array of Blob (1 blob for each 16kb PRG-ROM pages)
-      CHRRom => Array of Blob (1 blob for each 8kb CHR-ROM pages)
+      PRGRom => Array of Uint8Array (1 for each 16kb PRG-ROM pages)
+      CHRRom => Array of Uint8Array (1 for each 8kb CHR-ROM pages)
+      sram => Uint8Array
       mapperNumber => Number (http://wiki.nesdev.com/w/index.php/Mapper)
       fourscreenMirroring => Boolean
       horizontalMirroring => Boolean
@@ -34,7 +35,8 @@
         
         this.mapperNumber = (opts && opts['mapperNumber']) || 0;
         
-        this.sram = (opts && opts['sram']) || new Array((opts && opts['sramEnabled']) ? 0x2000 : 0);
+        this.sram = (opts && opts['sram']) ||
+                    this.normalizeData(new Array((opts && opts['sramEnabled']) ? 0x2000 : 0));
         
         this.fourscreenMirroring = opts && opts['fourscreenMirroring'];
         this.horizontalMirroring = opts && opts['horizontalMirroring'];
@@ -45,7 +47,7 @@
         constructor: Cartridge,
         
         addPRGData: function(data) {
-            this.PRGRom.push(data);
+            this.PRGRom.push(this.normalizeData(data));
             this.highPRGPageIndex = this.PRGRom.length - 1;
         },
         clearPRGData: function() {
@@ -53,10 +55,13 @@
             this.highPRGPageIndex = null;
         },
         addCHRData: function(data) {
-            this.CHRRom.push(data);
-        },
+            this.CHRRom.push(this.normalizeData(data)); },
         clearCHRData: function() {
-            this.CHRRom = [];
+            this.CHRRom = []; },
+        
+        normalizeData: function(data) {
+            if (ArrayBuffer.isView(data)) return data;
+            else return (new Uint8Array(data));
         },
         
         createFromFile: function(file) {

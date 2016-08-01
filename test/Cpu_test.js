@@ -5,7 +5,7 @@ describe("Nestled", function() {
         var subject, cartridge;
         var ram    =  [0x10,0x11,0x12,0x13];
         var sram   =  [0x20,0x21,0x22,0x23];
-        var PRGRom = [[0x30,0x31,0x32,0x33],Array(0x4000)];
+        var PRGRom = [[0x30,0x31,0x32,0x33,0x00,0x80],Array(0x4000)];
         PRGRom[1][0x3FFB] = 0x12; //NMI vector
         PRGRom[1][0x3FFA] = 0x34;
         PRGRom[1][0x3FFD] = 0x56; //RESET vector
@@ -407,8 +407,6 @@ describe("Nestled", function() {
             
             describe("#ind(operand)", function() {
                 beforeEach(function() {
-                    PRGRom[0][4] = 0x00;
-                    PRGRom[0][5] = 0x80;
                     subject.PC = 0x8004;
                     operand = subject.read(subject.PC);
                 });

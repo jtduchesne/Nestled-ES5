@@ -3,9 +3,9 @@ var expect = chai.expect;
 describe("Nestled", function() {
     describe(".Cartridge", function() {
         var subject;
-        var sram   =  [0x10,0x11,0x12,0x13];
-        var PRGRom = [[0x20,0x21,0x22,0x23],
-                      [0x30,0x31,0x32,0x33]];
+        var sram   =  new Uint8Array([0x10,0x11,0x12,0x13]);
+        var PRGRom = [new Uint8Array([0x20,0x21,0x22,0x23]),
+                      new Uint8Array([0x30,0x31,0x32,0x33])];
         
         beforeEach(function() {
             subject = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom});
