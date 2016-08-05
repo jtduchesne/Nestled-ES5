@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset='utf-8'>
+        <meta content='IE=edge' http-equiv='X-UA-Compatible'>
+        <meta content='width=device-width, initial-scale=1.0' name='viewport'>
+    
+        <title>Nestled NES emulator</title>
+        <meta name='description' content="Nestled is a Javascript NES emulator">
+    
+        <!-- Facebook Metadata -->
+        <meta property='og:title'       content="Nestled NES emulator">
+        <meta property='og:description' content="Nestled is a Javascript NES emulator">
+    
+        <!-- Google+ Metadata -->
+        <meta itemprop='name'        content="Nestled NES emulator">
+        <meta itemprop='description' content="Nestled is a Javascript NES emulator">
+        
+        <style type="text/css" media="screen">
+            main {
+                text-align: center;
+            }
+            .container {
+                width: 300px;
+                padding: 10px;
+                margin-left: auto;
+                margin-right: auto;
+                border: 1px solid #ccc;
+            }
+            #screen {
+                background-color: #000;
+            }
+            #drop_zone {
+                border: 2px dashed #bbb;
+                -moz-border-radius: 5px;
+                -webkit-border-radius: 5px;
+                border-radius: 5px;
+                padding: 25px;
+                margin: 15px;
+                font: 20pt bold 'Vollkorn';
+                color: #bbb;
+            }
+            input {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            output {
+                display: block;
+            	font-family: Consolas,Menlo,Monaco,'Lucida Console','Courier New',monospace,sans-serif;
+            	font-size: 8pt;;
+            	color: #555;
+                line-height: .9;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Nestled NES emulator</h1>
+            <div class="container">
+                <canvas id="screen" width="256" height="240"></canvas>
+                <div id="drop_zone">Drop game here</div>
+                <input type="file" id="file_select_button" name="nes_file" />
+                <output id="status"></output>
+            </div>
+        </main>
+        
+        <script src="src/Nes.js"></script>
+        <script src="src/Cpu.js"></script>
+        <script src="src/Cartridge.js"></script>
+        <script src="src/Mapper.js"></script>
+        <script src="src/File.js"></script>
+        
+        <script type="text/javascript">
+            var nesFile = new Nestled.File;
+            
+            var statusOutput = document.getElementById('status');
+            nesFile.onstatusupdate = function(e) {
+                statusOutput.appendChild(document.createElement('br'));
+                statusOutput.appendChild(document.createTextNode("> " + e.target.status));
+            };
+            
+            var cartridge = new Nestled.Cartridge;
+            nesFile.onload = function(e) {
+                if (nesFile.isValid) cartridge.createFromFile(e.target);
+            }
+            
+            var fileSelect = document.getElementById('file_select_button');
+            var dropZone = document.getElementById('drop_zone');
+            fileSelect.addEventListener('change', nesFile.handleFileSelect.bind(nesFile), false);
+            dropZone.addEventListener('dragover', nesFile.handleDragOver.bind(nesFile), false);
+            dropZone.addEventListener('drop', nesFile.handleDrop.bind(nesFile), false);
+        </script>
+    </body>
+</html>
