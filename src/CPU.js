@@ -6,8 +6,6 @@
       cartridge => Nestled.Cartridge
     */
     function Cpu(cartridge) {
-        this.cartridge = cartridge;
-        
         this.busy = false;
         this.tick = 0;
         
@@ -75,7 +73,12 @@
         ];
         
         //Initial RESET
-        if (this.cartridge) { this.doRESET(); }
+        if (cartridge) {
+            this.connectCartridge(cartridge);
+            this.doRESET();
+        } else {
+            this.disconnectCartridge();
+        }
     }
 
     Cpu.prototype = {
@@ -90,6 +93,10 @@
                        2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4, 2,5,2,5,4,4,4,4,2,4,2,4,4,4,4,4,
                        2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
                        2,6,3,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7],
+        
+        connectCartridge:    function(cartridge) { return this.cartridge = cartridge; },
+        disconnectCartridge: function() {
+            return this.cartridge = new Nestled.NoCartridge; },
         
         //== Main loop ==================================================//
         doFrame: function() {

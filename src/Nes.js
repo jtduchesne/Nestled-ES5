@@ -59,11 +59,11 @@
         //== Cartridge ===================================//
     
         insertCartridge: function(cartridge) {
-            return this.cartridge = cartridge;
+            return this.cartridge = this.cpu.connectCartridge(cartridge);
         },
         removeCartridge: function() {
             var cart = this.cartridge;
-            this.cartridge = undefined;
+            this.cartridge = this.cpu.disconnectCartridge();
             return cart;
         },
         blowIntoCartridge: function() { //Indeed
