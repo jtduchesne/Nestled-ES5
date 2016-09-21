@@ -64,7 +64,7 @@ describe("Nestled", function() {
         describe("#insertCartridge(cartridge)", function() {
             var cartridge = "This is a cartridge";
             
-            it("sets -this.cartridge-", function() {
+            it("sets the cartridge", function() {
                 expect(function() {
                     subject.insertCartridge(cartridge);
                 }).to.change(subject, 'cartridge');
@@ -78,11 +78,11 @@ describe("Nestled", function() {
             var cartridge = "This is a cartridge";
             beforeEach(function() { subject.insertCartridge(cartridge); });
             
-            it("clears -this.cartridge-", function() {
+            it("removes the cartridge", function() {
                 expect(function() {
                     subject.removeCartridge();
                 }).to.change(subject, 'cartridge');
-                expect(subject.cartridge).to.be.undefined;
+                expect(subject.cartridge).not.to.equal(cartridge);
             });
             it("returns the removed cartridge", function() {
                 expect(subject.removeCartridge()).to.equal(cartridge);

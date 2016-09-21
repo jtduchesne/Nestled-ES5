@@ -9,10 +9,10 @@
       audio     => ???
     */
     function Nes(opts) {
-        this.cartridge = opts && opts[cartridge];
-        this.joypads = opts && opts[joypads];
-        this.video = opts && opts[video];
-        this.audio = opts && opts[audio];
+        this.cartridge = opts && opts['cartridge'];
+        this.joypads = opts && opts['joypads'];
+        this.video = opts && opts['video'];
+        this.audio = opts && opts['audio'];
         
         var cpu = new Nestled.Cpu(this.cartridge);
         this.cpu = cpu;
@@ -21,7 +21,9 @@
         var isPowered = false;
         var mainLoop = null;
         this.powerOn  = function() {
-            mainLoop = setInterval(function() { cpu.emulateFrame(); }, 1000/60);
+            mainLoop = setInterval(function() {
+                cpu.doFrame();
+            }, 1000/60);
             return isPowered = true;
         };
         this.powerOff = function() {

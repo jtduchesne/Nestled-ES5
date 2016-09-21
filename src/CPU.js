@@ -92,7 +92,7 @@
                        2,6,3,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7],
         
         //== Main loop ==================================================//
-        emulateFrame: function() {
+        doFrame: function() {
             if (!this.busy) {
                 this.busy = true;
                 while(this.tick < this.ticksPerFrame)
