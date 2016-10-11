@@ -9,29 +9,30 @@
       audio     => ???
     */
     function Nes(opts) {
+        this.isPowered = false;
+        
         this.cartridge = opts && opts['cartridge'];
         this.joypads = opts && opts['joypads'];
         this.video = opts && opts['video'];
         this.audio = opts && opts['audio'];
         
-        var cpu = new Nestled.Cpu(this.cartridge);
-        this.cpu = cpu;
-        //this.ppu = new Nestled.Ppu(cartridge);
+        this.cpu = new Nestled.Cpu(this.cartridge);
+        //this.ppu = new Nestled.Ppu(this.cartridge);
         
-        var isPowered = false;
         var mainLoop = null;
+        var currentNes = this;
         this.powerOn  = function() {
+            currentNes.cpu.powerOn();
             mainLoop = setInterval(function() {
-                cpu.doFrame();
+                currentNes.cpu.doFrame();
             }, 1000/60);
-            return isPowered = true;
+            return currentNes.isPowered = true;
         };
         this.powerOff = function() {
             clearInterval(mainLoop);
-            return isPowered = false;
+            currentNes.cpu.powerOff();
+            return currentNes.isPowered = false;
         };
-        this.isPoweredOn  = function() { return isPowered; };
-        this.isPoweredOff = function() { return !isPowered; };
     }
 
     Nes.prototype = {
@@ -40,12 +41,12 @@
         //== Buttons =====================================//
     
         pressPower: function() {
-            if (this.isPoweredOff()) {
+            if (!this.isPowered) {
                 this.powerOn();
             } else {
                 this.powerOff();
             }
-            return this.isPoweredOn();
+            return this.isPowered;
         },
         pressReset: function()  {
             this.cpu.doRESET();
@@ -54,7 +55,7 @@
         //== Front red LED ===============================//
         // (Yes, it is a fully-fledged part of the NES !)
         
-        FrontLEDState: function() { return this.isPoweredOn() ? '1' : '0'; },
+        FrontLEDState: function() { return this.isPowered ? '1' : '0'; },
     
         //== Cartridge ===================================//
     

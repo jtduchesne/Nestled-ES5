@@ -9,23 +9,6 @@ describe("Nestled", function() {
         it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });
         it("can be turned off", function() { expect(subject).to.respondTo('powerOff'); });
         
-        describe("#isPoweredOn", function() {
-            it("returns -false- when the NES is off", function() {
-                subject.powerOff();
-                expect(subject.isPoweredOn()).to.be.false; });
-            it("returns -true- when the NES is on", function() {
-                subject.powerOn();
-                expect(subject.isPoweredOn()).to.be.true; });
-        });
-        describe("#isPoweredOff", function() {
-            it("returns -true- when the NES is off", function() {
-                subject.powerOff();
-                expect(subject.isPoweredOff()).to.be.true; });
-            it("returns -false- when the NES is on", function() {
-                subject.powerOn();
-                expect(subject.isPoweredOff()).to.be.false; });
-        });
-        
         describe("#pressPower()", function() {
             context("when it is off", function() {
                 beforeEach(function() { subject.powerOff(); });
@@ -35,7 +18,7 @@ describe("Nestled", function() {
                 });
                 it("becomes powered on", function() {
                     subject.pressPower();
-                    expect(subject.isPoweredOn()).to.be.true;
+                    expect(subject.isPowered).to.be.true;
                 });
                 it("turns on the Front LED", function() {
                     subject.pressPower();
@@ -50,7 +33,7 @@ describe("Nestled", function() {
                 });
                 it("becomes powered off", function() {
                     subject.pressPower();
-                    expect(subject.isPoweredOff()).to.be.true;
+                    expect(subject.isPowered).to.be.false;
                 });
                 it("turns off the Front LED", function() {
                     subject.pressPower();

@@ -19,16 +19,11 @@ describe("Nestled", function() {
             subject.ram = ram.slice(0);
         });
         
+        it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });
+        it("can be turned off", function() { expect(subject).to.respondTo('powerOff'); });
+        
         //-------------------------------------------------------------------------------//
         
-        context("on creation", function() {
-            it("sets A to 0", function() { expect(subject.A).to.equal(0); });
-            it("sets X to 0", function() { expect(subject.X).to.equal(0); });
-            it("sets Y to 0", function() { expect(subject.Y).to.equal(0); });
-            it("sets P to 0x34", function()  { expect(subject.P).to.equal(0x34); });
-            it("sets the I flag", function() { expect(subject.getInterrupt()).to.be.truthy; });
-            it("sets SP to 0x00", function() { expect(subject.SP).to.equal(0x00); });
-        });
         context("without a cartridge", function() {
             beforeEach(function() { subject.disconnectCartridge(); });
             
@@ -39,6 +34,27 @@ describe("Nestled", function() {
                 expect(subject.read(0x8000)).not.to.be.undefined;
                 expect(subject.readWord.bind(subject, 0x8000)).not.to.throw(Error);
                 expect(subject.readWord(0x8000)).not.to.be.undefined; });
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        describe("#powerOn()", function() {
+            beforeEach(function() { subject.powerOn(); });
+            
+            it("sets isPowered", function() { expect(subject.isPowered).to.be.true });
+            
+            it("sets A to 0", function() { expect(subject.A).to.equal(0); });
+            it("sets X to 0", function() { expect(subject.X).to.equal(0); });
+            it("sets Y to 0", function() { expect(subject.Y).to.equal(0); });
+            it("sets P to 0x34", function()  { expect(subject.P).to.equal(0x34); });
+            it("sets the I flag", function() { expect(subject.getInterrupt()).to.be.truthy; });
+            it("sets SP to 0x00", function() { expect(subject.SP).to.equal(0x00); });
+        });
+        
+        describe("#powerOff()", function() {
+            beforeEach(function() { subject.powerOff(); });
+            
+            it("clears isPowered", function() { expect(subject.isPowered).to.be.false });
         });
         
         //-------------------------------------------------------------------------------//
@@ -122,6 +138,7 @@ describe("Nestled", function() {
         context("Stack", function() {
             var prevSP;
             beforeEach(function() {
+                subject.powerOn();
                 prevSP = subject.SP;
             });
             

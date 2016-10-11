@@ -44,14 +44,6 @@
                 margin-left: auto;
                 margin-right: auto;
             }
-            output {
-                display: block;
-            	font-family: Consolas,Menlo,Monaco,'Lucida Console','Courier New',monospace,sans-serif;
-            	font-size: 8pt;;
-            	color: #555;
-                line-height: .9;
-                text-align: left;
-            }
         </style>
     </head>
     <body>
@@ -59,9 +51,10 @@
             <h1>Nestled NES emulator</h1>
             <div class="container">
                 <canvas id="screen" width="256" height="240"></canvas>
+                <input type="button" id="power_button" name="power" value="Power" disabled />
+                <input type="button" id="reset_button" name="reset" value="Reset" disabled />
                 <div id="drop_zone">Drop game here</div>
                 <input type="file" id="file_select_button" name="nes_file" />
-                <output id="status"></output>
             </div>
         </main>
         
@@ -73,17 +66,23 @@
         <script src="src/File.js"></script>
         
         <script type="text/javascript">
+            var nes = new Nestled.Nes({video: document.getElementById('screen')});
+            var cartridge = new Nestled.Cartridge;
             var nesFile = new Nestled.File;
             
-            var statusOutput = document.getElementById('status');
-            nesFile.onstatusupdate = function(e) {
-                statusOutput.appendChild(document.createElement('br'));
-                statusOutput.appendChild(document.createTextNode("> " + e.target.status));
-            };
+            var powerButton = document.getElementById('power_button');
+            var resetButton = document.getElementById('reset_button');
+            powerButton.onclick = nes.pressPower.bind(nes);
+            resetButton.onclick = nes.pressReset.bind(nes);
             
-            var cartridge = new Nestled.Cartridge;
             nesFile.onload = function(e) {
-                if (nesFile.isValid) cartridge.createFromFile(e.target);
+                if (nesFile.isValid) {
+                    if (cartridge.createFromFile(e.target)) {
+                        nes.insertCartridge(cartridge);
+                        powerButton.disabled = false;
+                        resetButton.disabled = false;
+                    }
+                }
             }
             
             var fileSelect = document.getElementById('file_select_button');

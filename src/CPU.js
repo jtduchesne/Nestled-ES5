@@ -6,21 +6,7 @@
       cartridge => Nestled.Cartridge
     */
     function Cpu(cartridge) {
-        this.busy = false;
-        this.tick = 0;
-        
-        //Accumulator
-        this.A = 0;
-        //Indexes
-        this.X = 0;
-        this.Y = 0;
-        //Status register: Negative|oVerflow|---|*BRK*|Decimal|Interrupt|Zero|Carry
-        //                 [MSB] <-----<-----<-----<-----<-----<-----<-----<- [LSB]
-        this.P = 0x34; //b00110100
-        //Stack pointer
-        this.SP = 0xFD;
-        //Program counter
-        this.PC = 0;
+        this.powerOff();
         
         //RAM
         this.ram = new Array(0x800);
@@ -72,10 +58,8 @@
             this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
         ];
         
-        //Initial RESET
         if (cartridge) {
             this.connectCartridge(cartridge);
-            this.doRESET();
         } else {
             this.disconnectCartridge();
         }
@@ -94,7 +78,32 @@
                        2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
                        2,6,3,8,3,3,5,5,2,2,2,2,4,4,6,6, 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7],
         
-        connectCartridge:    function(cartridge) { return this.cartridge = cartridge; },
+        powerOn:  function() {
+            this.isPowered = true;
+            this.doRESET();
+        },
+        powerOff: function() {
+            this.isPowered = false;
+        
+            this.busy = false;
+            this.tick = 0;
+        
+            //Accumulator
+            this.A = 0;
+            //Indexes
+            this.X = 0;
+            this.Y = 0;
+            //Status register: Negative|oVerflow|---|*BRK*|Decimal|Interrupt|Zero|Carry
+            //                 [MSB] <-----<-----<-----<-----<-----<-----<-----<- [LSB]
+            this.P = 0x34; //b00110100
+            //Stack pointer
+            this.SP = 0xFD;
+            //Program counter
+            this.PC = 0;
+        },
+        
+        connectCartridge: function(cartridge) {
+            return this.cartridge = cartridge; },
         disconnectCartridge: function() {
             return this.cartridge = new Nestled.NoCartridge; },
         
