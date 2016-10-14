@@ -112,7 +112,7 @@
             if (!this.busy) {
                 this.busy = true;
                 while(this.tick < this.ticksPerFrame)
-                    doInstruction();
+                    this.doInstruction();
                 this.tick -= this.ticksPerFrame;
                 this.busy = false;
             }
@@ -145,24 +145,28 @@
         
         //== Memory access ==============================================//
         read: function(address) {
+            var data;
             if (address < 0x2000) {
-                return this.ram[address & 0x7FF];
+                data = this.ram[address & 0x7FF];
             } else if (address < 0x4018) {
                 if (address < 0x4000)       { /* return this.ppu.read(address); */ }
                 else if (address == 0x4016) { /* return this.joypad[0].read(); */ }
                 else if (address == 0x4017) { /* return this.joypad[1].read(); */ }
                 else                        { /* return this.apu.read(); */ }
             } else {
-                return this.cartridge.read(address);
+                data = this.cartridge.read(address);
             }
+            return data || 0;
         },
         readWord: function(address) {
+            var data;
             if (address < 0x2000) {
                 address &= 0x7FF;
-                return this.ram[address] + (this.ram[address+1] * 0x100);
+                data = this.ram[address] + (this.ram[address+1] * 0x100);
             } else {
-                return this.cartridge.readWord(address);
+                data = this.cartridge.readWord(address);
             }
+            return data || 0;
         },
         write: function(address, data) {
             if (address < 0x2000) {
@@ -176,7 +180,7 @@
                 else if (address == 0x4016) { /* (Joypads strobe); */ }
                 else                        { /* this.apu.write(address,data); */ }
             } else {
-                return this.cartridge.write(address, data);
+                this.cartridge.write(address, data);
             }
         },
         

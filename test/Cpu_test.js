@@ -115,6 +115,8 @@ describe("Nestled", function() {
                 expect(subject.read(0x6002)).to.equal(0x22); });
             it("reads from PRG-ROM when address is between [0x8000, 0xFFFF]", function() {
                 expect(subject.read(0x8003)).to.equal(0x33); });
+            it("returns zero instead of undefined", function() {
+                expect(subject.read(0x07FF)).to.equal(0); });
         });
         describe("#readWord(address)", function() {
             it("reads from RAM when address is between [0x0000, 0x07FF]", function() {
@@ -123,6 +125,8 @@ describe("Nestled", function() {
                 expect(subject.readWord(0x6001)).to.equal(0x2221); });
             it("reads from PRG-ROM when address is between [0x8000, 0xFFFF]", function() {
                 expect(subject.readWord(0x8002)).to.equal(0x3332); });
+            it("returns zero instead of undefined", function() {
+                expect(subject.readWord(0x07FE)).to.equal(0); });
         });
         describe("#write(address,data)", function() {
             it("writes to RAM when address is between [0x0000, 0x07FF]", function() {
