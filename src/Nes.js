@@ -19,18 +19,19 @@
         this.cpu = new Nestled.Cpu(this.cartridge);
         //this.ppu = new Nestled.Ppu(this.cartridge);
         
-        var mainLoop = null;
+        var currentLoop;
         var currentNes = this;
         this.powerOn  = function() {
             currentNes.cpu.powerOn();
-            mainLoop = setInterval(function() {
+            (function mainLoop() {
+                currentLoop = window.requestAnimationFrame(mainLoop);
                 currentNes.cpu.doFrame();
-            }, 1000/60);
+            })();
             return currentNes.isPowered = true;
         };
         this.powerOff = function() {
-            clearInterval(mainLoop);
             currentNes.cpu.powerOff();
+            window.cancelAnimationFrame(currentLoop);
             return currentNes.isPowered = false;
         };
     }
