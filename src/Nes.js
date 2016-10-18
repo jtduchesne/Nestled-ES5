@@ -7,6 +7,13 @@
       joypads   => Array of Nestled.Joypad
       video     => ???
       audio     => ???
+    
+    Nes events:
+      onpower, onreset, oninsertcartridge, onremovecartridge, oninsertjoypad, onremovejoypad
+      -> Events occur AFTER the action have been executed
+      -> All events function get the Nes object (this) in the argument's 'target' property
+         ie: var nes = new Nestled.Nes;
+             nes.onpower = function(e) { if (e.target.isPowered) doSomething(); }
     */
     function Nes(opts) {
         this.isPowered = false;
@@ -47,25 +54,41 @@
             } else {
                 this.powerOff();
             }
+            
+            if (typeof this.onpower === "function")
+                setTimeout(this.onpower.bind(null, {target: this}), 1);
+            
             return this.isPowered;
         },
         pressReset: function()  {
             this.cpu.doRESET();
+            
+            if (typeof this.onreset === "function")
+                setTimeout(this.onreset.bind(null, {target: this}), 1);
         },
         
         //== Front red LED ===============================//
         // (Yes, it is a fully-fledged part of the NES !)
         
-        FrontLEDState: function() { return this.isPowered ? '1' : '0'; },
+        frontLEDState: function() { return this.isPowered ? 'on' : 'off'; },
     
         //== Cartridge ===================================//
     
         insertCartridge: function(cartridge) {
-            return this.cartridge = this.cpu.connectCartridge(cartridge);
+            this.cartridge = this.cpu.connectCartridge(cartridge);
+            
+            if (typeof this.oninsertcartridge === "function")
+                setTimeout(this.oninsertcartridge.bind(null, {target: this}), 1);
+            
+            return this.cartridge;
         },
         removeCartridge: function() {
             var cart = this.cartridge;
             this.cartridge = this.cpu.disconnectCartridge();
+            
+            if (typeof this.onremovecartridge === "function")
+                setTimeout(this.onremovecartridge.bind(null, {target: this}), 1);
+            
             return cart;
         },
         blowIntoCartridge: function() { //Indeed
@@ -79,17 +102,29 @@
         
         insertJoypad: function(joypad, position) {
             position = position || (this.joypads.length);
-            return this.joypads[position] = joypad;
+            this.joypads[position] = joypad;
+            
+            if (typeof this.oninsertjoypad === "function")
+                setTimeout(this.oninsertjoypad.bind(null, {target: this}), 1);
+            
+            return this.joypads[position];
         },
         removeJoypad: function(position) {
             position = arguments.length ? position : (this.joypads.length - 1);
             var joypad = this.joypads[position];
             this.joypads[position] = undefined;
+            
+            if (typeof this.onremovejoypad === "function")
+                setTimeout(this.onremovejoypad.bind(null, {target: this}), 1);
+            
             return joypad;
         },
         removeAllJoypads: function() {
             this.joypads = [];
-        }
+            
+            if (typeof this.onremovejoypad === "function")
+                setTimeout(this.onremovejoypad.bind(null, {target: this}), 1);
+        },
         
         //== Video output ================================//
         

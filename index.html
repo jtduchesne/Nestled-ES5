@@ -30,6 +30,18 @@
             #screen {
                 background-color: #000;
             }
+            #canvas_fallback {
+                background-image: url(https://i.ytimg.com/vi/mvM2eyk1frk/hqdefault.jpg);
+                background-size: 100% 100%;
+                background-repeat: no-repeat;
+                width: 256px;
+                height: 240px;
+            }
+            #canvas_fallback p {
+                display: inline-block;
+                color: #222;
+                margin-top: 50px;
+            }
             #drop_zone {
                 border: 2px dashed #bbb;
                 -moz-border-radius: 5px;
@@ -41,18 +53,29 @@
                 color: #bbb;
             }
             input {
+                vertical-align: middle;
                 margin-left: auto;
                 margin-right: auto;
             }
+            #front_led { vertical-align: middle; }
+            #front_led.on  {  }
+            #front_led.off { filter: grayscale(100%); }
         </style>
     </head>
     <body>
         <main>
             <h1>Nestled NES emulator</h1>
             <div class="container">
-                <canvas id="screen" width="256" height="240"></canvas>
-                <input type="button" id="power_button" name="power" value="Power" disabled />
-                <input type="button" id="reset_button" name="reset" value="Reset" disabled />
+                <div id="screen">
+                    <canvas id="nes_output" width="256" height="240" moz-opaque>
+                        <div id="canvas_fallback"><p>Your browser doesn't support HTML5 <code>&lt;canvas&gt;</code> elements. Upgrade your browser to run Nestled.</p></div>
+                    </canvas>
+                </div>
+                <div id="buttons">
+                    <object id="front_led" class="off" width="16" height="16" type="image/svg+xml" data="img/LED.svg"></object>
+                    <input type="button" id="power_button" name="power" value="Power" />
+                    <input type="button" id="reset_button" name="reset" value="Reset" />
+                </div>
                 <div id="drop_zone">Drop game here</div>
                 <input type="file" id="file_select_button" name="nes_file" />
             </div>
@@ -68,13 +91,13 @@
         <script type="text/javascript">
             var nes = new Nestled.Nes({video: document.getElementById('screen')});
             var cartridge = new Nestled.Cartridge;
-            var nesFile = new Nestled.File;
             
             var powerButton = document.getElementById('power_button');
             var resetButton = document.getElementById('reset_button');
             powerButton.onclick = nes.pressPower.bind(nes);
             resetButton.onclick = nes.pressReset.bind(nes);
             
+            var nesFile = new Nestled.File;
             nesFile.onload = function(e) {
                 if (nesFile.isValid) {
                     if (cartridge.createFromFile(e.target)) {
@@ -85,9 +108,15 @@
                 }
             }
             
+            var frontLED = document.getElementById('front_led');
+            nes.onpower = function(e) {
+                frontLED.className = e.target.frontLEDState();
+            };
+            
             var fileSelect = document.getElementById('file_select_button');
-            var dropZone = document.getElementById('drop_zone');
             fileSelect.addEventListener('change', nesFile.handleFileSelect.bind(nesFile), false);
+            
+            var dropZone = document.getElementById('drop_zone');
             dropZone.addEventListener('dragover', nesFile.handleDragOver.bind(nesFile), false);
             dropZone.addEventListener('drop', nesFile.handleDrop.bind(nesFile), false);
         </script>

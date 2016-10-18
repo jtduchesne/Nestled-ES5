@@ -22,7 +22,7 @@ describe("Nestled", function() {
                 });
                 it("turns on the Front LED", function() {
                     subject.pressPower();
-                    expect(subject.FrontLEDState()).to.equal('1');
+                    expect(subject.frontLEDState()).to.equal('on');
                 });
             });
             context("when it is on", function() {
@@ -37,7 +37,26 @@ describe("Nestled", function() {
                 });
                 it("turns off the Front LED", function() {
                     subject.pressPower();
-                    expect(subject.FrontLEDState()).to.equal('0');
+                    expect(subject.frontLEDState()).to.equal('off');
+                });
+            });
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        describe("#frontLEDState", function() {
+            context("when it is on", function() {
+                beforeEach(function() { subject.powerOn(); });
+                
+                it("returns 'on' (as string)", function() {
+                    expect(subject.frontLEDState()).to.equal('on');
+                });
+            });
+            context("when it is off", function() {
+                beforeEach(function() { subject.powerOff(); });
+                
+                it("returns 'off' (as string)", function() {
+                    expect(subject.frontLEDState()).to.equal('off');
                 });
             });
         });
