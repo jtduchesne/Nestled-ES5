@@ -6,17 +6,10 @@
       cartridge => Nestled.Cartridge
     */
     function Cpu(cartridge) {
-        this.powerOff();
+        this.cartridge = null;
         
         //RAM
         this.ram = new Array(0x800);
-        
-        //Pre-allocated buffers for opcode and operand fetch
-        this.opcode = 0;
-        this.operand = 0;
-        
-        //Pre-allocated buffer for arithmetic operations
-        this.alu = 0;
         
         //Addressing modes lookup table
         this.addressLookup = [
@@ -58,6 +51,8 @@
             this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
         ];
         
+        this.powerOff();
+        
         if (cartridge) {
             this.connectCartridge(cartridge);
         } else {
@@ -83,11 +78,11 @@
             this.doRESET();
         },
         powerOff: function() {
-            this.isPowered = false;
-        
             this.busy = false;
             this.tick = 0;
-        
+            
+            //Program counter
+            this.PC = 0;
             //Accumulator
             this.A = 0;
             //Indexes
@@ -98,8 +93,8 @@
             this.P = 0x34; //b00110100
             //Stack pointer
             this.SP = 0xFD;
-            //Program counter
-            this.PC = 0;
+            
+            this.isPowered = false;
         },
         
         connectCartridge: function(cartridge) {
@@ -111,19 +106,20 @@
         doFrame: function() {
             if (!this.busy) {
                 this.busy = true;
-                while(this.tick < this.ticksPerFrame)
+                var maxTicks = this.ticksPerFrame;
+                while(this.tick < maxTicks)
                     this.doInstruction();
-                this.tick -= this.ticksPerFrame;
+                this.tick -= maxTicks;
                 this.busy = false;
             }
         },
         doInstruction: function() {
-            this.opcode  = this.read(this.PC++);
-            this.operand = this.read(this.PC);
-            this.instructionLookup[this.opcode].call(this, function() {
-                return this.addressLookup[this.opcode].call(this, this.operand);
+            var opcode  = this.read(this.PC++);
+            var operand = this.read(this.PC);
+            this.instructionLookup[opcode].call(this, function() {
+                return this.addressLookup[opcode].call(this, operand);
             });
-            this.tick += this.cyclesLookup[this.opcode];
+            this.tick += this.cyclesLookup[opcode];
         },
         
         //== Interrupts =================================================//
@@ -194,12 +190,12 @@
         },
         
         pullByte: function() {
-            this.alu = this.ram[0x100 + this.SP]
+            var alu = this.ram[0x100 + this.SP] || 0;
             this.SP = this.SP+1 & 0xFF;
-            return this.alu;
+            return alu;
         },
         pullWord: function() {
-            return this.pullByte() + (this.pullByte() << 8);
+            return this.pullByte() + (this.pullByte() * 0x100);
         },
         
         //== Registers ==================================================//
@@ -207,7 +203,6 @@
         setA:   function(value) { return this.setZNFlags(this.A = value); },
         setX:   function(value) { return this.setZNFlags(this.X = value); },
         setY:   function(value) { return this.setZNFlags(this.Y = value); },
-        setALU: function(value) { return this.setZNFlags(this.alu = value); },
         
         setZNFlags: function(value) {
             this.setZero(!(value&0xFF));
@@ -384,16 +379,18 @@
         // Arithmetic operations
         ADC: function(operand) { //Add with Carry
             operand = this.read(operand.call(this)) + this.getCarry();
-            this.ALU = this.A + operand;
-            this.setOverflow((this.A^this.ALU) & (operand^this.ALU) & 0x80);
-            if (this.setCarry(this.setA(this.ALU)>0xFF)) this.A-=0x100;
+            var a = this.A;
+            var alu = a + operand;
+            this.setOverflow((a^alu) & (operand^alu) & 0x80);
+            if (this.setCarry(this.setA(alu)>0xFF)) this.A-=0x100;
             this.PC++;
         },
         SBC: function(operand) { //Subtract with Carry
             operand = 0x100 - this.read(operand.call(this)) - this.getCarry();
-            this.ALU = this.A + operand;
-            this.setOverflow((this.A^this.ALU) & (operand^this.ALU) & 0x80);
-            if (this.setCarry(this.setA(this.ALU)>0xFF)) this.A-=0x100;
+            var a = this.A;
+            var alu = a + operand;
+            this.setOverflow((a^alu) & (operand^alu) & 0x80);
+            if (this.setCarry(this.setA(alu)>0xFF)) this.A-=0x100;
             this.PC++;
         },
         ASL: function(operand) { //Arithmetic Shift Left
@@ -402,9 +399,9 @@
                 this.setA(this.A*2);
                 if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
             } else {
-                this.setALU(this.read(operand)*2);
-                if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
-                this.write(operand, this.alu);
+                var alu = this.setZNFlags(this.read(operand)*2);
+                if (this.setCarry(alu>0xFF)) { alu-=0x100; }
+                this.write(operand, alu);
                 this.PC++;
             }
         },
@@ -414,9 +411,9 @@
                 if (this.setCarry(this.A%2)) { this.A-=1; }
                 this.setA(this.A/2);
             } else {
-                this.alu = this.read(operand);
-                if (this.setCarry(this.alu%2)) { this.alu-=1; }
-                this.write(operand, this.setALU(this.alu/2));
+                var alu = this.read(operand);
+                if (this.setCarry(alu%2)) { alu-=1; }
+                this.write(operand, this.setZNFlags(alu/2));
                 this.PC++;
             }
         },
@@ -426,65 +423,81 @@
                 this.setA(this.A*2+this.getCarry());
                 if (this.setCarry(this.A>0xFF)) { this.A-=0x100; }
             } else {
-                this.setALU(this.read(operand)*2+this.getCarry());
-                if (this.setCarry(this.alu>0xFF)) { this.alu-=0x100; }
-                this.write(operand, this.alu);
+                var alu = this.setZNFlags(this.read(operand)*2+this.getCarry());
+                if (this.setCarry(alu>0xFF)) { alu-=0x100; }
+                this.write(operand, alu);
                 this.PC++;
             }
         },
         ROR: function(operand) { //Rotate Right
             operand = operand.call(this);
+            var alu;
             if (operand===null) { //Opcode $6A is implied
-                this.alu = this.A+(this.getCarry()*0x100);
-                if (this.setCarry(this.alu%2)) { this.alu-=1; }
-                this.setA(this.alu/2);
+                alu = this.A+(this.getCarry()*0x100);
+                if (this.setCarry(alu%2)) { alu-=1; }
+                this.setA(alu/2);
             } else {
-                this.alu = this.read(operand)+(this.getCarry()*0x100);
-                if (this.setCarry(this.alu%2)) { this.alu-=1; }
-                this.write(operand, this.setALU(this.alu/2));
+                alu = this.read(operand)+(this.getCarry()*0x100);
+                if (this.setCarry(alu%2)) { alu-=1; }
+                this.write(operand, this.setZNFlags(alu/2));
                 this.PC++;
             }
         },
         
         INC: function(operand) { //Increment memory
             operand = operand.call(this);
-            this.write(operand, this.setALU(this.read(operand)+1));
+            this.write(operand, this.setZNFlags(this.read(operand)+1));
             this.PC++;
         },
         DEC: function(operand) { //Decrement memory
             operand = operand.call(this);
-            this.write(operand, this.setALU(this.read(operand)-1));
+            this.write(operand, this.setZNFlags(this.read(operand)-1));
             this.PC++;
         },
-        INX: function(operand) { this.setX((this.X<0xFF) ? this.X+1 : 0x00); }, //Increment X
-        DEX: function(operand) { this.setX((this.X>0x00) ? this.X-1 : 0xFF); }, //Decrement X
-        INY: function(operand) { this.setY((this.Y<0xFF) ? this.Y+1 : 0x00); }, //Increment Y
-        DEY: function(operand) { this.setY((this.Y>0x00) ? this.Y-1 : 0xFF); }, //Decrement Y
+        INX: function(operand) { //Increment X
+            var x = this.X;
+            this.setX((x<0xFF) ? x+1 : 0x00);
+        },
+        DEX: function(operand) { //Decrement X
+            var x = this.X;
+            this.setX((x>0x00) ? x-1 : 0xFF);
+        },
+        INY: function(operand) { //Increment Y
+            var y = this.Y;
+            this.setY((y<0xFF) ? y+1 : 0x00);
+        },
+        DEY: function(operand) { //Decrement Y
+            var y = this.Y;
+            this.setY((y>0x00) ? y-1 : 0xFF);
+        },
         
         BIT: function(operand) { //Bit test
-            this.alu = this.read(operand.call(this));
-            if (this.setNegative(this.alu>0x7F)) {
-                this.setOverflow(this.alu>0xBF);
+            var alu = this.read(operand.call(this));
+            if (this.setNegative(alu>0x7F)) {
+                this.setOverflow(alu>0xBF);
             } else {
-                this.setOverflow(this.alu>0x3F);
+                this.setOverflow(alu>0x3F);
             }
-            this.setZero(!(this.A&this.alu));
+            this.setZero(!(this.A&alu));
             this.PC++;
         },
         CMP: function(operand) { //Compare with Accumulator
-            this.setALU(this.read(operand.call(this)));
-            this.setCarry(this.A>=this.alu);
-            this.setZero(this.A==this.alu);
+            var a = this.A;
+            var alu = this.setZNFlags(this.read(operand.call(this)));
+            this.setCarry(a>=alu);
+            this.setZero(a==alu);
         },
         CPX: function(operand) { //Compare with X
-            this.setALU(this.read(operand.call(this)));
-            this.setCarry(this.X>=this.alu);
-            this.setZero(this.X==this.alu);
+            var x = this.X;
+            var alu = this.setZNFlags(this.read(operand.call(this)));
+            this.setCarry(x>=alu);
+            this.setZero(x==alu);
         },
         CPY: function(operand) { //Compare with Y
-            this.setALU(this.read(operand.call(this)));
-            this.setCarry(this.Y>=this.alu);
-            this.setZero(this.Y==this.alu);
+            var y = this.Y;
+            var alu = this.setZNFlags(this.read(operand.call(this)));
+            this.setCarry(y>=alu);
+            this.setZero(y==alu);
         },
         
         // Logical operations
