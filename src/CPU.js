@@ -78,7 +78,6 @@
             this.doRESET();
         },
         powerOff: function() {
-            this.busy = false;
             this.tick = 0;
             
             //Program counter
@@ -104,14 +103,10 @@
         
         //== Main loop ==================================================//
         doFrame: function() {
-            if (!this.busy) {
-                this.busy = true;
-                var maxTicks = this.ticksPerFrame;
-                while(this.tick < maxTicks)
-                    this.doInstruction();
-                this.tick -= maxTicks;
-                this.busy = false;
-            }
+            var maxTicks = this.ticksPerFrame;
+            while(this.tick < maxTicks)
+                this.doInstruction();
+            this.tick -= maxTicks;
         },
         doInstruction: function() {
             var opcode  = this.read(this.PC++);

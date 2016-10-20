@@ -60,6 +60,8 @@
             #front_led { vertical-align: middle; }
             #front_led.on  {  }
             #front_led.off { filter: grayscale(100%); }
+            #front_led.paused { filter: hue-rotate(60deg) brightness(120%); }
+            #pause_button { min-width: 75px; }
         </style>
     </head>
     <body>
@@ -71,10 +73,15 @@
                         <div id="canvas_fallback"><p>Your browser doesn't support HTML5 <code>&lt;canvas&gt;</code> elements. Upgrade your browser to run Nestled.</p></div>
                     </canvas>
                 </div>
+                <p class="stats">
+                    <span id="fps">0</span> fps (<span id="speed">0.0</span>% speed)
+                </p>
                 <div id="buttons">
                     <object id="front_led" class="off" width="16" height="16" type="image/svg+xml" data="img/LED.svg"></object>
                     <input type="button" id="power_button" name="power" value="Power" />
                     <input type="button" id="reset_button" name="reset" value="Reset" />
+                    <span>|</span>
+                    <input type="button" id="pause_button" name="pause" value="Pause" disabled />
                 </div>
                 <div id="drop_zone">Drop game here</div>
                 <input type="file" id="file_select_button" name="nes_file" />
@@ -97,20 +104,50 @@
             powerButton.onclick = nes.pressPower.bind(nes);
             resetButton.onclick = nes.pressReset.bind(nes);
             
+            var pauseButton = document.getElementById('pause_button');
+            pauseButton.onclick = function() {
+                if (nes.isPowered) {
+                    nes.paused ? nes.resumeEmulation() : nes.pauseEmulation();
+                } else
+                    this.disabled = true;
+            }
+            
             var nesFile = new Nestled.File;
             nesFile.onload = function(e) {
                 if (nesFile.isValid) {
                     if (cartridge.createFromFile(e.target)) {
                         nes.insertCartridge(cartridge);
-                        powerButton.disabled = false;
-                        resetButton.disabled = false;
                     }
                 }
             }
             
             var frontLED = document.getElementById('front_led');
+            var fpsView = document.getElementById('fps');
+            var speedView = document.getElementById('speed');
+            
+            var uiUpdateInterval;
             nes.onpower = function(e) {
+                if (e.target.isPowered) {
+                    var uiUpdate;
+                    (uiUpdate = function() {
+                        fpsView.innerHTML = nes.fps;
+                        speedView.innerHTML = nes.emulationSpeed.toFixed(1);
+                    })();
+                    uiUpdateInterval = setInterval(uiUpdate, 500);
+                    pauseButton.disabled = false;
+                } else {
+                    clearInterval(uiUpdateInterval);
+                    pauseButton.disabled = true;
+                }
                 frontLED.className = e.target.frontLEDState();
+            };
+            nes.onpauseemu = function(e) {
+                frontLED.className = "paused";
+                pauseButton.value = "Resume";
+            };
+            nes.onresumeemu = function(e) {
+                frontLED.className = e.target.frontLEDState();
+                pauseButton.value = "Pause";
             };
             
             var fileSelect = document.getElementById('file_select_button');
