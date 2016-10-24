@@ -19,13 +19,16 @@
     function Nes(opts) {
         this.isPowered = false;
         
-        this.cartridge = opts && opts['cartridge'];
+        if (opts && opts['cartridge'])
+            this.insertCartridge(opts['cartridge']);
+        else
+            this.removeCartridge();
         this.joypads = opts && opts['joypads'];
         this.video = opts && opts['video'];
         this.audio = opts && opts['audio'];
         
-        this.cpu = new Nestled.Cpu(this.cartridge);
         //this.ppu = new Nestled.Ppu(this.cartridge);
+        this.cpu = new Nestled.Cpu(this);
         
         var maxFPS = 60;
         var maxFrameTime = 1000.0/maxFPS;
@@ -129,7 +132,7 @@
         //== Cartridge ===================================//
     
         insertCartridge: function(cartridge) {
-            this.cartridge = this.cpu.connectCartridge(cartridge);
+            this.cartridge = cartridge;
             
             if (typeof this.oninsertcartridge === "function")
                 setTimeout(this.oninsertcartridge.bind(null, {target: this}), 1);
@@ -137,17 +140,17 @@
             return this.cartridge;
         },
         removeCartridge: function() {
-            var cart = this.cartridge;
-            this.cartridge = this.cpu.disconnectCartridge();
+            var removedCart = this.cartridge;
+            this.cartridge = new Nestled.NoCartridge;
             
             if (typeof this.onremovecartridge === "function")
                 setTimeout(this.onremovecartridge.bind(null, {target: this}), 1);
             
-            return cart;
+            return removedCart;
         },
         blowIntoCartridge: function() { //Indeed
             var cart = this.removeCartridge();
-            if (cart && (typeof cart.blow == 'function'))
+            if (cart && (typeof cart.blow === 'function'))
                 cart.blow(Math.floor(Math.random() * 3) + 1);
             return this.insertCartridge(cart);
         },

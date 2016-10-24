@@ -115,8 +115,8 @@
             }
         },
         
-        //== Memory access ==============================================//
-        read: function(address) {
+        //== Memory access from CPU =====================================//
+        cpuRead: function(address) {
             if (address >= 0xC000) {
                 return this.PRGRom[this.highPRGPageIndex][address & 0x3FFF];
             } else if (address >= 0x8000) {
@@ -125,7 +125,7 @@
                 return this.sram[address & 0x1FFF];
             }
         },
-        readWord: function(address) {
+        cpuReadWord: function(address) {
             if (address >= 0xC000) {
                 address &= 0x3FFF;
                 return this.PRGRom[this.highPRGPageIndex][address] + 
@@ -138,7 +138,7 @@
                 return this.sram[address] + (this.sram[address+1] * 0x100);
             }
         },
-        write: function(address, data) {
+        cpuWrite: function(address, data) {
             if (address < 0x8000) {
                 this.sram[address & 0x1FFF] = (data & 0xFF);
             }

@@ -11,8 +11,8 @@ describe("Nestled", function() {
             subject = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom});
         });
         
-        it("can be read",   function() { expect(subject).to.respondTo('read'); });
-        it("can be writen", function() { expect(subject).to.respondTo('write'); });
+        it("can be read by Cpu",   function() { expect(subject).to.respondTo('cpuRead'); });
+        it("can be writen by Cpu", function() { expect(subject).to.respondTo('cpuWrite'); });
         
         context("on creation", function() {
             it("defaults to Mapper 0", function() {
@@ -80,40 +80,40 @@ describe("Nestled", function() {
             });
         });
         
-        describe("#read(address)", function() {
+        describe("#cpuRead(address)", function() {
             it("reads from SRAM when address is between [0x6000, 0x7FFF]", function() {
-                expect(subject.read(0x6003)).to.equal(0x13); });
+                expect(subject.cpuRead(0x6003)).to.equal(0x13); });
             it("reads from PRG-ROM[0] when address is between [0x8000, 0xBFFF]", function() {
-                expect(subject.read(0x8002)).to.equal(0x22); });
+                expect(subject.cpuRead(0x8002)).to.equal(0x22); });
             it("reads from PRG-ROM[1] when address is between [0xC000, 0xFFFF]", function() {
-                expect(subject.read(0xC001)).to.equal(0x31); });
+                expect(subject.cpuRead(0xC001)).to.equal(0x31); });
             
             context("when there is only 1 PRG-Rom page", function() {
                 var otherSubject = new Nestled.Cartridge({sram: sram, PRGRom: [PRGRom[0]]});
                 
                 it("mirrors every reads to the first page", function() {
-                    expect(otherSubject.read(0xC001)).to.equal(0x21);
+                    expect(otherSubject.cpuRead(0xC001)).to.equal(0x21);
                 });
             });
         });
 
-        describe("#readWord(address)", function() {
+        describe("#cpuReadWord(address)", function() {
             it("reads from SRAM when address is between [0x6000, 0x7FFF]", function() {
-                expect(subject.readWord(0x6000)).to.equal(0x1110); });
+                expect(subject.cpuReadWord(0x6000)).to.equal(0x1110); });
             it("reads from PRG-ROM[0] when address is between [0x8000, 0xBFFF]", function() {
-                expect(subject.readWord(0x8001)).to.equal(0x2221); });
+                expect(subject.cpuReadWord(0x8001)).to.equal(0x2221); });
             it("reads from PRG-ROM[1] when address is between [0xC000, 0xFFFF]", function() {
-                expect(subject.readWord(0xC002)).to.equal(0x3332); });
+                expect(subject.cpuReadWord(0xC002)).to.equal(0x3332); });
         });
 
-        describe("#write(address,data)", function() {
+        describe("#cpuWrite(address,data)", function() {
             it("writes to SRAM when address is between [0x6000, 0x7FFF]", function() {
-                subject.write(0x6000, 0xFF);
+                subject.cpuWrite(0x6000, 0xFF);
                 expect(subject).to.have.deep.property('sram[0]', 0xFF); });
             it("cannot write to PRG-ROM", function() {
-                subject.write(0x8000, 0xFF);
+                subject.cpuWrite(0x8000, 0xFF);
                 expect(subject).to.have.deep.property('PRGRom[0][0]', 0x20);
-                subject.write(0xC000, 0xFF);
+                subject.cpuWrite(0xC000, 0xFF);
                 expect(subject).to.have.deep.property('PRGRom[1][0]', 0x30);
             });
         });

@@ -2,7 +2,7 @@ var expect = chai.expect;
 
 describe("Nestled", function() {
     describe(".Cpu", function() {
-        var subject, cartridge;
+        var subject, pseudoNes;
         var ram    =  [0x10,0x11,0x12,0x13];
         var sram   =  [0x20,0x21,0x22,0x23];
         var PRGRom = [[0x30,0x31,0x32,0x33,0x00,0x80],Array(0x4000)];
@@ -14,27 +14,13 @@ describe("Nestled", function() {
         PRGRom[1][0x3FFE] = 0xBC;
         
         beforeEach(function() {
-            cartridge = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom});
-            subject   = new Nestled.Cpu(cartridge);
+            pseudoNes = {cartridge: new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom})};
+            subject   = new Nestled.Cpu(pseudoNes);
             subject.ram = ram.slice(0);
         });
         
         it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });
         it("can be turned off", function() { expect(subject).to.respondTo('powerOff'); });
-        
-        //-------------------------------------------------------------------------------//
-        
-        context("without a cartridge", function() {
-            beforeEach(function() { subject.disconnectCartridge(); });
-            
-            it("can still boot", function() {
-                expect(subject.doRESET.bind(subject)).not.to.throw(Error); });
-            it("can still be read", function() {
-                expect(subject.read.bind(subject, 0x8000)).not.to.throw(Error);
-                expect(subject.read(0x8000)).not.to.be.undefined;
-                expect(subject.readWord.bind(subject, 0x8000)).not.to.throw(Error);
-                expect(subject.readWord(0x8000)).not.to.be.undefined; });
-        });
         
         //-------------------------------------------------------------------------------//
         
@@ -58,31 +44,7 @@ describe("Nestled", function() {
         });
         
         //-------------------------------------------------------------------------------//
-        
-        describe("#connectCartridge(cartridge)", function() {
-            var cartridge = "cartridge";
-            beforeEach(function() { subject.connectCartridge(cartridge); });
-            
-            it("connects the cartridge", function() {
-                expect(subject.cartridge).to.eql(cartridge); });
-            it("returns the cartridge", function() {
-                expect(subject.connectCartridge(cartridge)).to.eql(cartridge); });
-        });
-        describe("#disconnectCartridge()", function() {
-            var cartridge = "cartridge";
-            beforeEach(function() {
-                subject.cartridge = cartridge;
-                subject.disconnectCartridge();
-            });
-            
-            it("disconnects the cartridge", function() {
-                expect(subject.cartridge).not.to.eql(cartridge); });
-            it("returns an empty cartridge", function() {
-                expect(subject.disconnectCartridge()).to.be.an.instanceof(Nestled.Cartridge); });
-        });
-        
-        //-------------------------------------------------------------------------------//
-        
+                
         describe("#doNMI()", function() {
             beforeEach(function() { subject.doNMI(); });
             
@@ -134,7 +96,7 @@ describe("Nestled", function() {
                 expect(subject).to.have.deep.property('ram[0]', 0xFF); });
             it("writes to SRAM when address is between [0x6000, 0x7FFF]", function() {
                 subject.write(0x6000, 0xFF);
-                expect(subject.cartridge).to.have.deep.property('sram[0]', 0xFF); });
+                expect(subject.bus.cartridge).to.have.deep.property('sram[0]', 0xFF); });
         });
         
         //-------------------------------------------------------------------------------//

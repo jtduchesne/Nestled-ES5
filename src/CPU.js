@@ -3,10 +3,10 @@
 (function(Nestled, undefined) {
     /*
     Cpu properties:
-      cartridge => Nestled.Cartridge
+      nes => Nestled.Nes
     */
-    function Cpu(cartridge) {
-        this.cartridge = null;
+    function Cpu(nes) {
+        this.bus = nes;
         
         //RAM
         this.ram = new Array(0x800);
@@ -52,12 +52,6 @@
         ];
         
         this.powerOff();
-        
-        if (cartridge) {
-            this.connectCartridge(cartridge);
-        } else {
-            this.disconnectCartridge();
-        }
     }
 
     Cpu.prototype = {
@@ -95,12 +89,7 @@
             
             this.isPowered = false;
         },
-        
-        connectCartridge: function(cartridge) {
-            return this.cartridge = cartridge; },
-        disconnectCartridge: function() {
-            return this.cartridge = new Nestled.NoCartridge; },
-        
+                
         //== Main loop ==================================================//
         doFrame: function() {
             var maxTicks = this.ticksPerFrame;
@@ -145,7 +134,7 @@
                 else if (address == 0x4017) { /* return this.joypad[1].read(); */ }
                 else                        { /* return this.apu.read(); */ }
             } else {
-                data = this.cartridge.read(address);
+                data = this.bus.cartridge.cpuRead(address);
             }
             return data || 0;
         },
@@ -155,7 +144,7 @@
                 address &= 0x7FF;
                 data = this.ram[address] + (this.ram[address+1] * 0x100);
             } else {
-                data = this.cartridge.readWord(address);
+                data = this.bus.cartridge.cpuReadWord(address);
             }
             return data || 0;
         },
@@ -171,7 +160,7 @@
                 else if (address == 0x4016) { /* (Joypads strobe); */ }
                 else                        { /* this.apu.write(address,data); */ }
             } else {
-                this.cartridge.write(address, data);
+                this.bus.cartridge.cpuWrite(address, data);
             }
         },
         
