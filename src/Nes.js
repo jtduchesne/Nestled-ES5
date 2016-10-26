@@ -27,8 +27,8 @@
         this.video = opts && opts['video'];
         this.audio = opts && opts['audio'];
         
-        //this.ppu = new Nestled.Ppu(this.cartridge);
         this.cpu = new Nestled.Cpu(this);
+        this.ppu = new Nestled.Ppu(this);
         
         var maxFPS = 60;
         var maxFrameTime = 1000.0/maxFPS;

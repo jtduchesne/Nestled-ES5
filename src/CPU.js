@@ -129,7 +129,9 @@
             if (address < 0x2000) {
                 data = this.ram[address & 0x7FF];
             } else if (address < 0x4018) {
-                if (address < 0x4000)       { /* return this.ppu.read(address); */ }
+                if (address < 0x4000) {
+                    return this.bus.ppu.read(address);
+                }
                 else if (address == 0x4016) { /* return this.joypad[0].read(); */ }
                 else if (address == 0x4017) { /* return this.joypad[1].read(); */ }
                 else                        { /* return this.apu.read(); */ }
@@ -152,10 +154,15 @@
             if (address < 0x2000) {
                 this.ram[address & 0x7FF] = (data & 0xFF);
             } else if (address < 0x4018) {
-                if (address < 0x4000)       { /* this.ppu.write(address,data); */ }
-                else if (address == 0x4014) {
-                    // for(var dma=data<<16;dma<0x100;dma++)
-                    //     this.ppu.write(0x2004,this.read(dma));
+                if (address < 0x4000) {
+                    this.bus.ppu.write(address, data);
+                } else if (address == 0x4014) { //PPU DMA Access
+                    address = data<<16;
+                    var dmaIn = this.read;
+                    var dmaOut = this.bus.ppu.write;
+                    for(var stopAddress = address+0x100; address<stopAddress; address++)
+                        dmaOut(0x2004, dmaIn(address));
+                    this.tick += 513+(this.tick&1);
                 }
                 else if (address == 0x4016) { /* (Joypads strobe); */ }
                 else                        { /* this.apu.write(address,data); */ }

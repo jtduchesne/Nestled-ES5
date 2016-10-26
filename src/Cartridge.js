@@ -142,6 +142,27 @@
             if (address < 0x8000) {
                 this.sram[address & 0x1FFF] = (data & 0xFF);
             }
+        },
+        
+        //== Memory access from PPU =====================================//
+        ppuRead: function(address) {
+            return this.CHRRom[0][address & 0x1FFF];
+        },
+        ppuWrite: function(address, data) {
+            return;
+        },
+        
+        //== CIRAM /CE (Pin22) and CIRAM A10 (Pin57) ====================//
+        ciramEnabled: function(address) {
+            return address & 0x2000; //Connected to PPU /A13 by default
+        },
+        ciramA10: function(address) {
+            if (this.horizontalMirroring)
+                return address & 0x800; //Connected to PPU A11
+            else if (this.verticalMirroring)
+                return address & 0x400; //Connected to PPU A10
+            else
+                return 0;
         }
     }
     

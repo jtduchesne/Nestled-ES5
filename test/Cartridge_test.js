@@ -6,13 +6,16 @@ describe("Nestled", function() {
         var sram   =  new Uint8Array([0x10,0x11,0x12,0x13]);
         var PRGRom = [new Uint8Array([0x20,0x21,0x22,0x23]),
                       new Uint8Array([0x30,0x31,0x32,0x33])];
+        var CHRRom = [new Uint8Array([0x40,0x41,0x42,0x43])];
         
         beforeEach(function() {
-            subject = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom});
+            subject = new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom, CHRRom: CHRRom});
         });
         
         it("can be read by Cpu",   function() { expect(subject).to.respondTo('cpuRead'); });
         it("can be writen by Cpu", function() { expect(subject).to.respondTo('cpuWrite'); });
+        it("can be read by Ppu",   function() { expect(subject).to.respondTo('ppuRead'); });
+        it("can be writen by Ppu", function() { expect(subject).to.respondTo('ppuWrite'); });
         
         context("on creation", function() {
             it("defaults to Mapper 0", function() {
@@ -80,6 +83,8 @@ describe("Nestled", function() {
             });
         });
         
+        //-------------------------------------------------------------------------------//
+        
         describe("#cpuRead(address)", function() {
             it("reads from SRAM when address is between [0x6000, 0x7FFF]", function() {
                 expect(subject.cpuRead(0x6003)).to.equal(0x13); });
@@ -115,6 +120,53 @@ describe("Nestled", function() {
                 expect(subject).to.have.deep.property('PRGRom[0][0]', 0x20);
                 subject.cpuWrite(0xC000, 0xFF);
                 expect(subject).to.have.deep.property('PRGRom[1][0]', 0x30);
+            });
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        describe("#ppuRead(address)", function() {
+            it("reads from CHR-ROM[0] when address is between [0x0000, 0x1FFF]", function() {
+                expect(subject.ppuRead(0x0002)).to.equal(0x42); });
+        });
+
+        describe("#ppuWrite(address,data)", function() {
+            it("does nothing");
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        describe("#ciramEnabled(address)", function() {
+            it("is truthy if A13 (0x2000) is set", function() {
+                expect(subject.ciramEnabled(0x2000)).to.be.truthy;
+            });
+            it("is falsy if A13 (0x2000) is clear", function() {
+                expect(subject.ciramEnabled(0x1FFF)).to.be.falsy;
+            });
+        });
+        
+        //-------------------------------------------------------------------------------//
+        
+        describe("#ciramA10(address)", function() {
+            context("when cartridge has horizontal mirroring", function() {
+                beforeEach(function() { subject.horizontalMirroring = true; });
+                
+                it("is truthy if A11 (0x800) is set", function() {
+                    expect(subject.ciramA10(0x0800)).to.be.truthy;
+                });
+                it("is falsy if A11 (0x800) is clear", function() {
+                    expect(subject.ciramA10(0x37FF)).to.be.falsy;
+                });
+            });
+            context("when cartridge has vertical mirroring", function() {
+                beforeEach(function() { subject.verticalMirroring = true; });
+                
+                it("is truthy if A10 (0x400) is set", function() {
+                    expect(subject.ciramA10(0x0400)).to.be.truthy;
+                });
+                it("is falsy if A10 (0x400) is clear", function() {
+                    expect(subject.ciramA10(0x3BFF)).to.be.falsy;
+                });
             });
         });
     });
