@@ -21,7 +21,6 @@
                 text-align: center;
             }
             .container {
-                width: 300px;
                 padding: 10px;
                 margin-left: auto;
                 margin-right: auto;
@@ -46,6 +45,9 @@
                 justify-content: space-between;
                 align-items: center;
             }
+            #debug_screen p {
+                display: inline-block;
+                color: #FFF;
             }
             #canvas_fallback {
                 background-image: url(https://i.ytimg.com/vi/mvM2eyk1frk/hqdefault.jpg);
@@ -95,6 +97,9 @@
                         <canvas id="debug_bkg_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_spr_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_colors" width="240" height="32" moz-opaque></canvas>
+                        <p>A: 0x<span id="debug_A">00</span> X: 0x<span id="debug_X">00</span> Y: 0x<span id="debug_Y">00</span><br/>
+                           P: 0x<span id="debug_P">00 [--------]</span> SP: 0x<span id="debug_SP">00</span><br/>
+                           PC: 0x<span id="debug_PC">0000</span></p>
                     </div>
                 </div>
                 <p class="stats">
@@ -114,6 +119,7 @@
         
         <script src="src/Colors.js"></script>
         <script src="src/Palette.js"></script>
+        <script src="src/Counter.js"></script>
         <script src="src/Cpu.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Nes.js"></script>
@@ -121,6 +127,7 @@
         <script src="src/NoCartridge.js"></script>
         <script src="src/Mapper.js"></script>
         <script src="src/File.js"></script>
+        <script src="src/Debugger.js"></script>
         
         <script type="text/javascript">
             var nes = new Nestled.Nes({video: document.getElementById('screen')});
@@ -149,30 +156,41 @@
             }
             
             var frontLED = document.getElementById('front_led');
-            var fpsView = document.getElementById('fps');
-            var speedView = document.getElementById('speed');
             
-            var uiUpdateInterval;
+            var debug = new Nestled.Debugger;
+            debug.bindTextOutput('fps', {source: nes.counter, target: 'fps', modifier: 'Round'});
+            debug.bindTextOutput('Speed', {source: function() {
+                return Math.round(nes.counter.emulationSpeed*10)/10;
+            }, target: 'speed'});
+            
+            debug.bindImageOutput('BkgPalette', {source: nes.ppu.bkgPalette, target: 'debug_bkg_palette'});
+            debug.bindImageOutput('SprPalette', {source: nes.ppu.sprPalette, target: 'debug_spr_palette'});
+            debug.bindImageOutput('Colors',     {source: nes.ppu.colors, target: 'debug_colors'});
+            
+            debug.bindTextOutput('A',  {source: nes.cpu, target: 'debug_A',  modifier: 'Byte'});
+            debug.bindTextOutput('X',  {source: nes.cpu, target: 'debug_X',  modifier: 'Byte'});
+            debug.bindTextOutput('Y',  {source: nes.cpu, target: 'debug_Y',  modifier: 'Byte'});
+            debug.bindTextOutput('P',  {source: nes.cpu, target: 'debug_P',  modifier: 'StatusFlags'});
+            debug.bindTextOutput('SP', {source: nes.cpu, target: 'debug_SP', modifier: 'Byte'});
+            debug.bindTextOutput('PC', {source: nes.cpu, target: 'debug_PC', modifier: 'Word'});
+            
             nes.onpower = function(e) {
                 if (e.target.isPowered) {
-                    var uiUpdate;
-                    (uiUpdate = function() {
-                        fpsView.innerHTML = nes.fps;
-                        speedView.innerHTML = nes.emulationSpeed.toFixed(1);
-                    })();
-                    uiUpdateInterval = setInterval(uiUpdate, 500);
+                    debug.enableAll();
                     pauseButton.disabled = false;
                 } else {
-                    clearInterval(uiUpdateInterval);
+                    debug.disableAll();
                     pauseButton.disabled = true;
                 }
                 frontLED.className = e.target.frontLEDState();
             };
             nes.onpauseemu = function(e) {
+                debug.disableAll();
                 frontLED.className = "paused";
                 pauseButton.value = "Resume";
             };
             nes.onresumeemu = function(e) {
+                debug.enableAll();
                 frontLED.className = e.target.frontLEDState();
                 pauseButton.value = "Pause";
             };

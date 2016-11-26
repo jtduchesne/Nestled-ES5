@@ -30,20 +30,21 @@
         this.cpu = new Nestled.Cpu(this);
         this.ppu = new Nestled.Ppu(this);
         
-        var maxFPS = 60;
-        var maxFrameTime = 1000.0/maxFPS;
-        this.fps = maxFPS;
-        this.emulationSpeed = 0.0;
-        
-        var deltaTime = 0.0;
-        var lastLoopTime = 0.0;
-        var lastRenderTime = 0.0;
-        var averageDuration = 0.0;
+        var maxFPS = 60.0;
+        var maxFrameTime = 1000/maxFPS;
+        this.counter = new Nestled.Counter({expectedFrameTime: maxFrameTime});
+        var counter = this.counter;
         
         var currentLoop;
         var currentNes = this;
+        
+        var deltaTime = 0.0;
+        var firstLoop = function(startTime) {
+            counter.init(startTime);
+            currentLoop = window.requestAnimationFrame(mainLoop);
+        };
         var mainLoop = function(startTime) {
-            deltaTime += Math.min(1000, startTime - (lastLoopTime || startTime));
+            deltaTime += counter.start(startTime);
             
             if (deltaTime > maxFrameTime) {
                 while(deltaTime > maxFrameTime) {
@@ -52,29 +53,20 @@
                 }
                 currentNes.ppu.renderFrame();
                 
-                averageDuration += (startTime-(lastRenderTime||lastLoopTime)-averageDuration)/10;
-                
-                currentNes.fps = Math.round(1000/averageDuration);
-                currentNes.emulationSpeed = (maxFrameTime/(window.performance.now() - startTime))*100;
-                
-                lastRenderTime = startTime;
+                counter.step(startTime);
             }
-            lastLoopTime = startTime;
+            counter.loop(startTime);
             
             currentLoop = window.requestAnimationFrame(mainLoop);
         };
         
         this.powerOn  = function() {
             deltaTime = 0.0;
-            lastLoopTime = 0.0;
-            lastRenderTime = 0.0;
-            averageDuration = 0.0;
-            currentNes.fps = maxFPS;
-            currentNes.emulationSpeed = 0.0;
+            counter.reset();
             
             currentNes.cpu.powerOn();
-            currentLoop = window.requestAnimationFrame(mainLoop);
             currentNes.ppu.powerOn();
+            currentLoop = window.requestAnimationFrame(firstLoop);
             return currentNes.isPowered = true;
         };
         this.powerOff = function() {
