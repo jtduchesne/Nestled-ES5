@@ -174,8 +174,8 @@
                     this.bus.ppu.write(address, data);
                 } else if (address == 0x4014) { //PPU DMA Access
                     address = data<<16;
-                    var dmaIn = this.read;
-                    var dmaOut = this.bus.ppu.write;
+                    var dmaIn = this.read.bind(this);
+                    var dmaOut = this.bus.ppu.write.bind(this.bus.ppu);
                     for(var stopAddress = address+0x100; address<stopAddress; address++)
                         dmaOut(0x2004, dmaIn(address));
                     this.tick += 513+(this.tick&1);
