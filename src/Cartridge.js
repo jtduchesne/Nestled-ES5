@@ -92,14 +92,14 @@
                 
                 this.clearPRGData();
                 for (var prgromPage = 0; prgromPage < header[4]; prgromPage++) {
-                    this.addPRGData(file.data.slice(curPos, curPos+0x8000));
-                    curPos += 0x8000; }
+                    this.addPRGData(file.data.slice(curPos, curPos+0x4000));
+                    curPos += 0x4000; }
                 file.updateStatus(prgromPage*16 + "kb of PRG-Rom", true)
                 
                 this.clearCHRData();
                 for (var chrromPage = 0; chrromPage < header[5]; chrromPage++) {
-                    this.addCHRData(file.data.slice(curPos, curPos+0x4000));
-                    curPos += 0x4000; }
+                    this.addCHRData(file.data.slice(curPos, curPos+0x2000));
+                    curPos += 0x2000; }
                 file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true)
             
                 if (curPos < file.data.byteLength)

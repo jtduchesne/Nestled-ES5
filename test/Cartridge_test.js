@@ -29,7 +29,7 @@ describe("Nestled", function() {
         
         describe("#createFromFile(file)", function() {
             var testFile;
-            var testData = new Uint8Array([0x4E,0x45,0x53,0x1A,0x01,0x01,0xCB,0xD0,
+            var testData = new Uint8Array([0x4E,0x45,0x53,0x1A,0x02,0x02,0xCB,0xD0,
                                            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]
                                            .concat((new Array(0x8000)).fill(0xA5))
                                            .concat((new Array(0x4000)).fill(0xC3))
@@ -68,12 +68,16 @@ describe("Nestled", function() {
             });
             
             it("sets PRG-Rom data", function() {
-                expect(subject.PRGRom[0].byteLength).to.equal(0x8000);
+                expect(subject.PRGRom.length).to.equal(2);
+                expect(subject.PRGRom[0].byteLength).to.equal(0x4000);
+                expect(subject.PRGRom[1].byteLength).to.equal(0x4000);
                 expect(new Uint8Array(subject.PRGRom[0])[0]).to.equal(0xA5);
                 expect(new Uint8Array(subject.PRGRom[0]).slice(-1)[0]).to.equal(0xA5);
             });
             it("sets CHR-Rom data", function() {
-                expect(subject.CHRRom[0].byteLength).to.equal(0x4000);
+                expect(subject.CHRRom.length).to.equal(2);
+                expect(subject.CHRRom[0].byteLength).to.equal(0x2000);
+                expect(subject.CHRRom[1].byteLength).to.equal(0x2000);
                 expect(new Uint8Array(subject.CHRRom[0])[0]).to.equal(0xC3);
                 expect(new Uint8Array(subject.CHRRom[0]).slice(-1)[0]).to.equal(0xC3);
             });
