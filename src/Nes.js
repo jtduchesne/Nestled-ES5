@@ -5,7 +5,7 @@
     Nes properties:
       cartridge => Nestled.Cartridge
       joypads   => Array of Nestled.Joypad
-      video     => ???
+      video     => DOM Node of <canvas> element
       audio     => ???
     
     Nes events:
@@ -50,7 +50,7 @@
                     currentNes.cpu.doFrame();
                     deltaTime -= maxFrameTime;
                 }
-                //currentNes.ppu.renderFrame();
+                currentNes.ppu.renderFrame();
                 
                 averageDuration += (startTime-(lastRenderTime||lastLoopTime)-averageDuration)/10;
                 
@@ -74,10 +74,12 @@
             
             currentNes.cpu.powerOn();
             currentLoop = window.requestAnimationFrame(mainLoop);
+            currentNes.ppu.powerOn();
             return currentNes.isPowered = true;
         };
         this.powerOff = function() {
             currentNes.cpu.powerOff();
+            currentNes.ppu.powerOff();
             window.cancelAnimationFrame(currentLoop);
             return currentNes.isPowered = false;
         };

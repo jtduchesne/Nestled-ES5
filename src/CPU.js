@@ -130,7 +130,7 @@
                 data = this.ram[address & 0x7FF];
             } else if (address < 0x4018) {
                 if (address < 0x4000) {
-                    return this.bus.ppu.read(address);
+                    data = this.bus.ppu.read(address);
                 }
                 else if (address == 0x4016) { /* return this.joypad[0].read(); */ }
                 else if (address == 0x4017) { /* return this.joypad[1].read(); */ }

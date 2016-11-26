@@ -16,6 +16,7 @@
         //Palettes
         this.backgroundPalette = [new Array(4), new Array(4), new Array(4), new Array(4)];
         this.spritesPalette = [new Array(4), new Array(4), new Array(4), new Array(4)];
+        this.colors = new Nestled.Colors;
             
         this.powerOff();
         

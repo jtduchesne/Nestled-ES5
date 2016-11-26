@@ -27,8 +27,25 @@
                 margin-right: auto;
                 border: 1px solid #ccc;
             }
-            #screen {
+            #screens {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            #nes_screen {
                 background-color: #000;
+                width: 256px;
+                margin: 5px;
+            }
+            #debug_screen {
+                background-color: #000;
+                width: 256px;
+                margin: 5px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+            }
             }
             #canvas_fallback {
                 background-image: url(https://i.ytimg.com/vi/mvM2eyk1frk/hqdefault.jpg);
@@ -68,10 +85,15 @@
         <main>
             <h1>Nestled NES emulator</h1>
             <div class="container">
-                <div id="screen">
-                    <canvas id="nes_output" width="256" height="240" moz-opaque>
-                        <div id="canvas_fallback"><p>Your browser doesn't support HTML5 <code>&lt;canvas&gt;</code> elements. Upgrade your browser to run Nestled.</p></div>
-                    </canvas>
+                <div id="screens">
+                    <div id="nes_screen">
+                        <canvas id="nes_output" width="256" height="240" moz-opaque>
+                            <div id="canvas_fallback"><p>Your browser doesn't support HTML5 <code>&lt;canvas&gt;</code> elements. Upgrade your browser to run Nestled.</p></div>
+                        </canvas>
+                    </div>
+                    <div id="debug_screen">
+                        <canvas id="debug_colors" width="240" height="32" moz-opaque></canvas>
+                    </div>
                 </div>
                 <p class="stats">
                     <span id="fps">0</span> fps (<span id="speed">0.0</span>% speed)
@@ -88,6 +110,7 @@
             </div>
         </main>
         
+        <script src="src/Colors.js"></script>
         <script src="src/Cpu.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Nes.js"></script>
