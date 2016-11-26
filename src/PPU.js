@@ -30,6 +30,15 @@
         
         powerOn:  function() {
             this.isPowered = true;
+        
+            //This will be called only once and will then self-destruct,
+            //letting the one in the prototype do its work.
+            var coldPpu = this;
+            coldPpu.renderFrame = function() {
+                setTimeout(coldPpu.setVBlank.bind(coldPpu), 1.275);
+                setTimeout(coldPpu.setVBlank.bind(coldPpu), 2.662);
+                delete coldPpu.renderFrame;
+            };
         },
         powerOff: function() {
             this.clearReadBuffer();    //$2007 Data Register
@@ -108,7 +117,8 @@
         
         //== Rendering ==================================================//
         renderFrame: function() {
-            
+            this.setVBlank();
+            if (this.nmiEnabled) this.bus.cpu.doNMI();
         },
         
         //== I/O access =================================================//
