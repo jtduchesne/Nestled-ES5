@@ -68,7 +68,7 @@
                 border-radius: 5px;
                 padding: 25px;
                 margin: 15px;
-                font: 20pt bold 'Vollkorn';
+                font: 20pt bold;
                 color: #bbb;
             }
             input {
@@ -196,6 +196,7 @@
             };
             
             var fileSelect = document.getElementById('file_select_button');
+            fileSelect.value = "";
             fileSelect.addEventListener('change', nesFile.handleFileSelect.bind(nesFile), false);
             
             var dropZone = document.getElementById('drop_zone');
