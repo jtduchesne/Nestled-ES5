@@ -14,9 +14,9 @@
         this.oam = new Array(0x100);
         
         //Palettes
-        this.backgroundPalette = [new Array(4), new Array(4), new Array(4), new Array(4)];
-        this.spritesPalette = [new Array(4), new Array(4), new Array(4), new Array(4)];
         this.colors = new Nestled.Colors;
+        this.bkgPalette = new Nestled.Palette({colors: this.colors});
+        this.sprPalette = new Nestled.Palette({colors: this.colors});
             
         this.powerOff();
         
@@ -62,13 +62,14 @@
             this.clearScroll();
         },
         
+        //== Registers ==================================================//
         clearControlRegister: function() {
-            this.baseNametableAddress = 0x2000;     //[0x2000,0x2400,0x2800,0x2C00]
-            this.addToXScroll = 0;                  //[0,256]
-            this.addToYScroll = 0;                  //[0,240]
-            this.addressIncrement = 1;              //[1,32]
-            this.spritePatternTableAddress = 0;     //[0x0000,0x1000]
-            this.backgroundPatternTableAddress = 0; //[0x0000,0x1000]
+            this.baseNametableAddress = 0x2000; //[0x2000,0x2400,0x2800,0x2C00]
+            this.addToXScroll = 0;              //[0,256]
+            this.addToYScroll = 0;              //[0,240]
+            this.addressIncrement = 1;          //[1,32]
+            this.sprPatternTableAddress = 0;    //[0x0000,0x1000]
+            this.bkgPatternTableAddress = 0;    //[0x0000,0x1000]
             this.sprite8x16 = 0;
             this.nmiEnabled = 0;
         },
@@ -147,8 +148,8 @@
                 this.addToXScroll = (data&0x1) ? 256 : 0;
                 this.addToYScroll = (data&0x2) ? 240 : 0;
                 this.addressIncrement = (data&0x04) ? 32 : 1;
-                this.spritePatternTableAddress = (data&0x08) ? 0x1000 : 0x0000;
-                this.backgroundPatternTableAddress = (data&0x10) ? 0x1000 : 0x0000;
+                this.sprPatternTableAddress = (data&0x08) ? 0x1000 : 0x0000;
+                this.bkgPatternTableAddress = (data&0x10) ? 0x1000 : 0x0000;
                 this.sprite8x16 = data&0x20;
                 this.nmiEnabled = data&0x80;
                 break;
@@ -215,19 +216,19 @@
             var colorIndex = address & 0x3;
             var paletteIndex = (address>>2) & 0x3;
             if (!colorIndex)
-                return this.backgroundPalette[0][0];
+                return this.bkgPalette.getByte(0, 0);
             else
-                return (address&0x10 ? this.spritesPalette : 
-                                       this.backgroundPalette)[paletteIndex][colorIndex];
+                return (address&0x10 ? this.sprPalette : 
+                                       this.bkgPalette).getByte(paletteIndex, colorIndex);
         },
         writePalette: function(address, data) {
             var colorIndex = address & 0x3;
             var paletteIndex = (address>>2) & 0x3;
             if (!colorIndex)
-                this.backgroundPalette[paletteIndex][0] = data;
+                this.bkgPalette.setByte(paletteIndex, 0, data);
             else
-                (address&0x10 ? this.spritesPalette : 
-                                this.backgroundPalette)[paletteIndex][colorIndex] = data;
+                (address&0x10 ? this.sprPalette : 
+                                this.bkgPalette).setByte(paletteIndex, colorIndex, data);
         }
     }
     

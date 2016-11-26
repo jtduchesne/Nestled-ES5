@@ -7,14 +7,8 @@ describe("Nestled", function() {
         var vram   = [[0x40,0x41,0x42,0x43],
                       [0x48,0x49,0x4A,0x4B]];
         var oam    =  [0x50,0x51,0x52,0x53];
-        var bkgPalette = [[0xFF,0x01,0x02,0x03],
-                          [0x04,0x05,0x06,0x07],
-                          [0x08,0x09,0x0A,0x0B],
-                          [0x0C,0x0D,0x0E,0x0F]];
-        var sprPalette = [[0x10,0x11,0x12,0x13],
-                          [0x14,0x15,0x16,0x17],
-                          [0x18,0x19,0x1A,0x1B],
-                          [0x1C,0x1D,0x1E,0x1F]];
+        var bkgPalette = [0x3F,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F];
+        var sprPalette = [0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F];
         
         beforeEach(function() {
             pseudoNes = {cartridge: new Nestled.Cartridge({CHRRom: CHRRom})};
@@ -22,10 +16,8 @@ describe("Nestled", function() {
             
             subject.vram = [vram[0].slice(0),vram[1].slice(0)];
             subject.oam = oam.slice(0);
-            subject.backgroundPalette = [bkgPalette[0].slice(0),bkgPalette[1].slice(0),
-                                         bkgPalette[2].slice(0),bkgPalette[3].slice(0)];
-            subject.spritesPalette = [sprPalette[0].slice(0),sprPalette[1].slice(0),
-                                      sprPalette[2].slice(0),sprPalette[3].slice(0)];
+            subject.bkgPalette.setBytes(0, bkgPalette);
+            subject.sprPalette.setBytes(0, sprPalette);
         });
         
         it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });
@@ -43,8 +35,8 @@ describe("Nestled", function() {
                 expect(subject.addToXScroll).to.equal(0);
                 expect(subject.addToYScroll).to.equal(0);
                 expect(subject.addressIncrement).to.equal(1);
-                expect(subject.spritePatternTableAddress).to.equal(0);
-                expect(subject.backgroundPatternTableAddress).to.equal(0);
+                expect(subject.sprPatternTableAddress).to.equal(0);
+                expect(subject.bkgPatternTableAddress).to.equal(0);
                 expect(subject.sprite8x16).to.equal(0);
                 expect(subject.nmiEnabled).to.equal(0);
             });
@@ -86,8 +78,8 @@ describe("Nestled", function() {
                 expect(subject.addToXScroll).to.equal(0);
                 expect(subject.addToYScroll).to.equal(0);
                 expect(subject.addressIncrement).to.equal(1);
-                expect(subject.spritePatternTableAddress).to.equal(0);
-                expect(subject.backgroundPatternTableAddress).to.equal(0);
+                expect(subject.sprPatternTableAddress).to.equal(0);
+                expect(subject.bkgPatternTableAddress).to.equal(0);
                 expect(subject.sprite8x16).to.equal(0);
                 expect(subject.nmiEnabled).to.equal(0);
             });
@@ -227,16 +219,16 @@ describe("Nestled", function() {
                 context("and addressBuffer [0x3F00,0x3FFF]", function() {
                     beforeEach(function() {
                         subject.addressBuffer = 0x3F00;
-                        subject.vram[0][0x3F00&0x3FF] = 0xAA; //Mirror of 0x3F00...
+                        subject.vram[0][0x3F00&0x3FF] = 0x2A; //Mirror of 0x3F00...
                     });
                     
                     it("reads immediately from palette data", function() {
-                        expect(subject.read(0x2007)).to.equal(0xFF);
+                        expect(subject.read(0x2007)).to.equal(0x3F);
                     });
                     it("does put data into readBuffer", function() {
-                        expect(subject.read(0x2007)).to.equal(0xFF);
+                        expect(subject.read(0x2007)).to.equal(0x3F);
                         subject.addressBuffer = 0x0000;
-                        expect(subject.read(0x2007)).to.equal(0xAA);
+                        expect(subject.read(0x2007)).to.equal(0x2A);
                         expect(subject.read(0x2007)).to.equal(0x30);
                     });
                 });
@@ -257,8 +249,8 @@ describe("Nestled", function() {
                         expect(subject.addToXScroll).to.equal(0);
                         expect(subject.addToYScroll).to.equal(0);
                         expect(subject.addressIncrement).to.equal(1);
-                        expect(subject.spritePatternTableAddress).to.equal(0x0000);
-                        expect(subject.backgroundPatternTableAddress).to.equal(0x0000);
+                        expect(subject.sprPatternTableAddress).to.equal(0x0000);
+                        expect(subject.bkgPatternTableAddress).to.equal(0x0000);
                         expect(subject.sprite8x16).to.be.falsy;
                         expect(subject.vblank).to.be.falsy;
                     });
@@ -271,8 +263,8 @@ describe("Nestled", function() {
                         expect(subject.addToXScroll).to.equal(256);
                         expect(subject.addToYScroll).to.equal(240);
                         expect(subject.addressIncrement).to.equal(32);
-                        expect(subject.spritePatternTableAddress).to.equal(0x1000);
-                        expect(subject.backgroundPatternTableAddress).to.equal(0x1000);
+                        expect(subject.sprPatternTableAddress).to.equal(0x1000);
+                        expect(subject.bkgPatternTableAddress).to.equal(0x1000);
                         expect(subject.sprite8x16).to.be.truthy;
                         expect(subject.nmiEnabled).to.be.truthy;
                     });
@@ -397,8 +389,8 @@ describe("Nestled", function() {
                     beforeEach(function() { subject.addressBuffer = 0x3F00; });
                     
                     it("writes to palette data", function() {
-                        subject.write(0x2007, 0xAA);
-                        expect(subject.backgroundPalette[0][0]).to.equal(0xAA);
+                        subject.write(0x2007, 0x2A);
+                        expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x2A);
                     });
                 });
             });
@@ -499,59 +491,59 @@ describe("Nestled", function() {
         });
         
         describe("#readPalette(address)", function() {
-            it("reads from backgroundPalette when address [0x3F01-0x3F0F]", function() {
+            it("reads from bkgPalette when address [0x3F01-0x3F0F]", function() {
                 expect(subject.readPalette(0x3F01)).to.equal(0x01);
             });
-            it("reads from spritesPalette when address [0x3F11-0x3F1F]", function() {
+            it("reads from sprPalette when address [0x3F11-0x3F1F]", function() {
                 expect(subject.readPalette(0x3F11)).to.equal(0x11);
             });
             it("always reads 'Universal background color' when bit 0-1 are clear", function() {
-                expect(subject.readPalette(0x3F00)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F04)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F08)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F0C)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F10)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F14)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F18)).to.equal(0xFF);
-                expect(subject.readPalette(0x3F1C)).to.equal(0xFF);
+                expect(subject.readPalette(0x3F00)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F04)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F08)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F0C)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F10)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F14)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F18)).to.equal(0x3F);
+                expect(subject.readPalette(0x3F1C)).to.equal(0x3F);
             });
         });
         
         describe("#writePalette(address, data)", function() {
-            it("writes to backgroundPalette when address [0x3F01-0x3F0F]", function() {
-                subject.writePalette(0x3F01, 0x55);
-                expect(subject.backgroundPalette[0][1]).to.equal(0x55);
+            it("writes to bkgPalette when address [0x3F01-0x3F0F]", function() {
+                subject.writePalette(0x3F01, 0x15);
+                expect(subject.bkgPalette.rawBuffer[1]).to.equal(0x15);
             });
-            it("writes to spritesPalette when address [0x3F11-0x3F1F]", function() {
-                subject.writePalette(0x3F11, 0x55);
-                expect(subject.spritesPalette[0][1]).to.equal(0x55);
+            it("writes to sprPalette when address [0x3F11-0x3F1F]", function() {
+                subject.writePalette(0x3F11, 0x15);
+                expect(subject.sprPalette.rawBuffer[1]).to.equal(0x15);
             });
-            it("does write to backgroundPalette when address 0x3F0[0,4,8,C]", function() {
-                subject.writePalette(0x3F00, 0x55);
-                expect(subject.backgroundPalette[0][0]).to.equal(0x55);
-                subject.writePalette(0x3F04, 0x56);
-                expect(subject.backgroundPalette[1][0]).to.equal(0x56);
-                subject.writePalette(0x3F08, 0x57);
-                expect(subject.backgroundPalette[2][0]).to.equal(0x57);
-                subject.writePalette(0x3F0C, 0x58);
-                expect(subject.backgroundPalette[3][0]).to.equal(0x58);
+            it("writes to bkgPalette when address 0x3F0[0,4,8,C]", function() {
+                subject.writePalette(0x3F00, 0x15);
+                expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x15);
+                subject.writePalette(0x3F04, 0x16);
+                expect(subject.bkgPalette.rawBuffer[4]).to.equal(0x16);
+                subject.writePalette(0x3F08, 0x17);
+                expect(subject.bkgPalette.rawBuffer[8]).to.equal(0x17);
+                subject.writePalette(0x3F0C, 0x18);
+                expect(subject.bkgPalette.rawBuffer[12]).to.equal(0x18);
             });
-            it("also writes to backgroundPalette when address 0x3F1[0,4,8,C]", function() {
-                subject.writePalette(0x3F10, 0x55);
-                expect(subject.backgroundPalette[0][0]).to.equal(0x55);
-                expect(subject.spritesPalette[0][0]).to.equal(0x10);
+            it("also writes to bkgPalette when address 0x3F1[0,4,8,C]", function() {
+                subject.writePalette(0x3F10, 0x15);
+                expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x15);
+                expect(subject.sprPalette.rawBuffer[0]).to.equal(0x10);
                 
-                subject.writePalette(0x3F14, 0x56);
-                expect(subject.backgroundPalette[1][0]).to.equal(0x56);
-                expect(subject.spritesPalette[1][0]).to.equal(0x14);
+                subject.writePalette(0x3F14, 0x16);
+                expect(subject.bkgPalette.rawBuffer[4]).to.equal(0x16);
+                expect(subject.sprPalette.rawBuffer[4]).to.equal(0x14);
                 
-                subject.writePalette(0x3F18, 0x57);
-                expect(subject.backgroundPalette[2][0]).to.equal(0x57);
-                expect(subject.spritesPalette[2][0]).to.equal(0x18);
+                subject.writePalette(0x3F18, 0x17);
+                expect(subject.bkgPalette.rawBuffer[8]).to.equal(0x17);
+                expect(subject.sprPalette.rawBuffer[8]).to.equal(0x18);
                 
-                subject.writePalette(0x3F1C, 0x58);
-                expect(subject.backgroundPalette[3][0]).to.equal(0x58);
-                expect(subject.spritesPalette[3][0]).to.equal(0x1C);
+                subject.writePalette(0x3F1C, 0x18);
+                expect(subject.bkgPalette.rawBuffer[12]).to.equal(0x18);
+                expect(subject.sprPalette.rawBuffer[12]).to.equal(0x1C);
             });
         });
     });

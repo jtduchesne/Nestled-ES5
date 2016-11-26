@@ -92,6 +92,8 @@
                         </canvas>
                     </div>
                     <div id="debug_screen">
+                        <canvas id="debug_bkg_palette" width="120" height="32" moz-opaque></canvas>
+                        <canvas id="debug_spr_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_colors" width="240" height="32" moz-opaque></canvas>
                     </div>
                 </div>
@@ -111,6 +113,7 @@
         </main>
         
         <script src="src/Colors.js"></script>
+        <script src="src/Palette.js"></script>
         <script src="src/Cpu.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Nes.js"></script>
