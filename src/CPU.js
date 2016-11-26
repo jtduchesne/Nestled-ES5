@@ -275,7 +275,7 @@
         
         // Jump, subroutine and interrupt
         BRK: function(operand) { //Interrupt
-            this.pushWord(this.PC);
+            this.pushWord(this.PC+1);
             this.pushByte(this.P);
             this.PC = this.readWord(0xFFFE);
             var journal = this.journal;
@@ -288,7 +288,7 @@
             if (journal[journal.length-1]) journal.push(0);
         },
         JSR: function(operand) { //Jump to Subroutine
-            this.pushWord(this.PC);
+            this.pushWord(this.PC+1);
             this.PC = operand.call(this);
             var journal = this.journal;
             if (journal[journal.length-1]) journal.push(0);
@@ -503,18 +503,21 @@
             var alu = this.setZNFlags(this.read(operand.call(this)));
             this.setCarry(a>=alu);
             this.setZero(a==alu);
+            this.PC++;
         },
         CPX: function(operand) { //Compare with X
             var x = this.X;
             var alu = this.setZNFlags(this.read(operand.call(this)));
             this.setCarry(x>=alu);
             this.setZero(x==alu);
+            this.PC++;
         },
         CPY: function(operand) { //Compare with Y
             var y = this.Y;
             var alu = this.setZNFlags(this.read(operand.call(this)));
             this.setCarry(y>=alu);
             this.setZero(y==alu);
+            this.PC++;
         },
         
         // Logical operations

@@ -483,7 +483,7 @@ describe("Nestled", function() {
                 });
                 it("pushes PC of the next opcode to the stack", function() {
                     subject.pullByte(); //Pull P first...
-                    expect(subject.pullWord()).to.equal(0x0001); });
+                    expect(subject.pullWord()).to.equal(0x0002); });
                 it("sets PC to the address at 0xFFFE", function() {
                     expect(subject.PC).to.equal(0x9ABC); });
                 it("takes 7 cycles", function() { expect(subject.tick).to.equal(7); });
@@ -507,7 +507,7 @@ describe("Nestled", function() {
                     subject.doInstruction();
                 });
                 it("pushes PC (before the second byte of operand) to the stack", function() {
-                    expect(subject.pullWord()).to.equal(0x0001); });
+                    expect(subject.pullWord()).to.equal(0x0002); });
                 it("sets PC to the operand", function() {
                     expect(subject.PC).to.equal(0x1234); });
                 it("takes 6 cycles", function() { expect(subject.tick).to.equal(6); });
@@ -1881,7 +1881,7 @@ describe("Nestled", function() {
                 });
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0001); });
+                    expect(subject.PC).to.equal(0x0002); });
                 it("takes 2 cycles", function() {
                     subject.doInstruction();
                     expect(subject.tick).to.equal(2); });
@@ -1916,7 +1916,7 @@ describe("Nestled", function() {
                 });
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0001); });
+                    expect(subject.PC).to.equal(0x0002); });
                 it("takes 2 cycles", function() {
                     subject.doInstruction();
                     expect(subject.tick).to.equal(2); });
@@ -1951,7 +1951,7 @@ describe("Nestled", function() {
                 });
                 it("sets PC to the next opcode", function() {
                     subject.doInstruction();
-                    expect(subject.PC).to.equal(0x0001); });
+                    expect(subject.PC).to.equal(0x0002); });
                 it("takes 2 cycles", function() {
                     subject.doInstruction();
                     expect(subject.tick).to.equal(2); });
