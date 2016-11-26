@@ -49,6 +49,11 @@
                 display: inline-block;
                 color: #FFF;
             }
+            #exec_window {
+                border: 1px solid #ccc;
+                text-align: left;
+                margin: 5px;
+            }
             #canvas_fallback {
                 background-image: url(https://i.ytimg.com/vi/mvM2eyk1frk/hqdefault.jpg);
                 background-size: 100% 100%;
@@ -82,6 +87,7 @@
             #front_led.paused { filter: hue-rotate(60deg) brightness(120%); }
             #pause_button { min-width: 75px; }
         </style>
+        <link href="DataChunker.css" rel="stylesheet">
     </head>
     <body>
         <main>
@@ -100,6 +106,11 @@
                         <p>A: 0x<span id="debug_A">00</span> X: 0x<span id="debug_X">00</span> Y: 0x<span id="debug_Y">00</span><br/>
                            P: 0x<span id="debug_P">00 [--------]</span> SP: 0x<span id="debug_SP">00</span><br/>
                            PC: 0x<span id="debug_PC">0000</span></p>
+                    </div>
+                    <div id="exec_window" class="chunker scroll">
+                        <ol class="chunker content">
+                            <li>No data</li>
+                        </ol>
                     </div>
                 </div>
                 <p class="stats">
@@ -128,6 +139,7 @@
         <script src="src/Mapper.js"></script>
         <script src="src/File.js"></script>
         <script src="src/Debugger.js"></script>
+        <script src="./DataChunker.js"></script>
         
         <script type="text/javascript">
             var nes = new Nestled.Nes({video: document.getElementById('screen')});
@@ -173,6 +185,8 @@
             debug.bindTextOutput('P',  {source: nes.cpu, target: 'debug_P',  modifier: 'StatusFlags'});
             debug.bindTextOutput('SP', {source: nes.cpu, target: 'debug_SP', modifier: 'Byte'});
             debug.bindTextOutput('PC', {source: nes.cpu, target: 'debug_PC', modifier: 'Word'});
+            
+            debug.bindDataOutput('exec', {source: nes.cpu.journal, target: 'exec_window'});
             
             nes.onpower = function(e) {
                 if (e.target.isPowered) {

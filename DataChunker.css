@@ -1,0 +1,18 @@
+.chunker.scroll{
+    max-height: 240px;
+    width: 200px;
+    overflow: auto;
+}
+
+.chunker.content{
+    outline: 0;
+}
+
+.extra-row{
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.keep-parity{
+    display: none;
+}

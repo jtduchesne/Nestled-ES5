@@ -51,6 +51,9 @@
             this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
         ];
         
+        this.journal = [];
+        this.journalHeat = [];
+        
         this.powerOff();
     }
 
@@ -70,9 +73,11 @@
         powerOn:  function() {
             this.isPowered = true;
             this.doRESET();
+            this.journal.length = 0;
         },
         powerOff: function() {
             this.tick = 0;
+            this.frame = 0;
             
             //Program counter
             this.PC = 0;
@@ -96,10 +101,21 @@
             while(this.tick < maxTicks)
                 this.doInstruction();
             this.tick -= maxTicks;
+            this.frame++;
+            if (this.frame&64)
+                this.journalHeat = [];
         },
         doInstruction: function() {
-            var opcode  = this.read(this.PC++);
-            var operand = this.read(this.PC);
+            var pc = this.PC++;
+            var opcode  = this.read(pc);
+            var operand = this.read(pc+1);
+            var operandWord = operand + this.read(pc+2)*256;
+            
+            var heat = this.journalHeat[pc];
+            if (!heat) this.journal.push([pc, opcode, operandWord]);
+            else if (heat===1) this.journal.push([pc, opcode, operandWord, true]);
+            this.journalHeat[pc] = (heat || 0) + 1;
+            
             this.instructionLookup[opcode].call(this, function() {
                 return this.addressLookup[opcode].call(this, operand);
             });
@@ -262,20 +278,30 @@
             this.pushWord(this.PC);
             this.pushByte(this.P);
             this.PC = this.readWord(0xFFFE);
+            var journal = this.journal;
+            if (journal[journal.length-1]) journal.push(0);
         },
         RTI: function(operand) { //Return from Interrupt
             this.P = this.pullByte();
             this.PC = this.pullWord();
+            var journal = this.journal;
+            if (journal[journal.length-1]) journal.push(0);
         },
         JSR: function(operand) { //Jump to Subroutine
             this.pushWord(this.PC);
             this.PC = operand.call(this);
+            var journal = this.journal;
+            if (journal[journal.length-1]) journal.push(0);
         },
         RTS: function(operand) { //Return from Subroutine
             this.PC = this.pullWord() + 1;
+            var journal = this.journal;
+            if (journal[journal.length-1]) journal.push(0);
         },
         JMP: function(operand) { //Jump to
             this.PC = operand.call(this);
+            var journal = this.journal;
+            if (journal[journal.length-1]) journal.push(0);
         },
         
         // Branching
