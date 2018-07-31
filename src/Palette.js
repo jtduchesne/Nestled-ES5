@@ -43,9 +43,6 @@
             this.output = output;
             this.outputContext = this.output.getContext('2d');
             
-            this.outputContext.mozImageSmoothingEnabled = false;
-            this.outputContext.webkitImageSmoothingEnabled = false;
-            this.outputContext.msImageSmoothingEnabled = false;
             this.outputContext.imageSmoothingEnabled = false;
             
             this.updateOutput();
