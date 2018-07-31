@@ -51,8 +51,7 @@
             this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
         ];
         
-        this.journal = [];
-        this.journalHeat = [];
+        this.journal = new Nestled.Journal;
         
         this.powerOff();
     }
@@ -72,8 +71,8 @@
         
         powerOn:  function() {
             this.isPowered = true;
+            this.journal.clear();
             this.doRESET();
-            this.journal.length = 0;
         },
         powerOff: function() {
             this.tick = 0;
@@ -102,8 +101,6 @@
                 this.doInstruction();
             this.tick -= maxTicks;
             this.frame++;
-            if (this.frame&64)
-                this.journalHeat = [];
         },
         doInstruction: function() {
             var pc = this.PC++;
@@ -111,10 +108,7 @@
             var operand = this.read(pc+1);
             var operandWord = operand + this.read(pc+2)*256;
             
-            var heat = this.journalHeat[pc];
-            if (!heat) this.journal.push([pc, opcode, operandWord]);
-            else if (heat===1) this.journal.push([pc, opcode, operandWord, true]);
-            this.journalHeat[pc] = (heat || 0) + 1;
+            this.journal.push(pc, opcode, operandWord);
             
             this.instructionLookup[opcode].call(this, function() {
                 return this.addressLookup[opcode].call(this, operand);
@@ -278,30 +272,25 @@
             this.pushWord(this.PC+1);
             this.pushByte(this.P);
             this.PC = this.readWord(0xFFFE);
-            var journal = this.journal;
-            if (journal[journal.length-1]) journal.push(0);
+            this.journal.addBlank();
         },
         RTI: function(operand) { //Return from Interrupt
             this.P = this.pullByte();
             this.PC = this.pullWord();
-            var journal = this.journal;
-            if (journal[journal.length-1]) journal.push(0);
+            this.journal.addBlank();
         },
         JSR: function(operand) { //Jump to Subroutine
             this.pushWord(this.PC+1);
             this.PC = operand.call(this);
-            var journal = this.journal;
-            if (journal[journal.length-1]) journal.push(0);
+            this.journal.addBlank();
         },
         RTS: function(operand) { //Return from Subroutine
             this.PC = this.pullWord() + 1;
-            var journal = this.journal;
-            if (journal[journal.length-1]) journal.push(0);
+            this.journal.addBlank();
         },
         JMP: function(operand) { //Jump to
             this.PC = operand.call(this);
-            var journal = this.journal;
-            if (journal[journal.length-1]) journal.push(0);
+            this.journal.addBlank();
         },
         
         // Branching

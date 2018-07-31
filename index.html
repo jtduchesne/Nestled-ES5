@@ -51,6 +51,7 @@
             }
             #exec_window {
                 border: 1px solid #ccc;
+                width: 256px;
                 text-align: left;
                 margin: 5px;
             }
@@ -131,6 +132,7 @@
         <script src="src/Colors.js"></script>
         <script src="src/Palette.js"></script>
         <script src="src/Counter.js"></script>
+        <script src="src/Journal.js"></script>
         <script src="src/Cpu.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Nes.js"></script>
@@ -186,7 +188,7 @@
             debug.bindTextOutput('SP', {source: nes.cpu, target: 'debug_SP', modifier: 'Byte'});
             debug.bindTextOutput('PC', {source: nes.cpu, target: 'debug_PC', modifier: 'Word'});
             
-            debug.bindDataOutput('exec', {source: nes.cpu.journal, target: 'exec_window'});
+            debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});
             
             nes.onpower = function(e) {
                 if (e.target.isPowered) {
