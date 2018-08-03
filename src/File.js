@@ -84,7 +84,6 @@
         onloadHandler: function(e) {
             this.data = e.target.result;
             this.isValid = true;
-            this.updateStatus(this.name + " loaded");
             if (typeof this.onload === "function")
                 setTimeout(this.onload.bind(null, {target: this}), 1);
         },

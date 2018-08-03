@@ -128,8 +128,12 @@
         insertCartridge: function(cartridge) {
             this.cartridge = cartridge;
             
-            if (typeof this.oninsertcartridge === "function")
-                setTimeout(this.oninsertcartridge.bind(null, {target: this}), 1);
+            if (cartridge) {
+                console.log("Nestled: Cartridge " + cartridge.name + " inserted");
+                
+                if (typeof this.oninsertcartridge === "function")
+                    setTimeout(this.oninsertcartridge.bind(null, {target: this}), 1);
+            }
             
             return this.cartridge;
         },
@@ -137,8 +141,13 @@
             var removedCart = this.cartridge;
             this.cartridge = new Nestled.NoCartridge;
             
-            if (typeof this.onremovecartridge === "function")
-                setTimeout(this.onremovecartridge.bind(null, {target: this}), 1);
+            if (removedCart && !(removedCart instanceof Nestled.NoCartridge)) {
+                 if (typeof this.onremovecartridge === "function")
+                    setTimeout(this.onremovecartridge.bind(null, {target: this}), 1);
+            
+                console.log("Nestled: Cartridge " + removedCart.name + " removed");
+                console.log("----------------------------------------------------------------");
+            }
             
             return removedCart;
         },
@@ -155,25 +164,26 @@
             position = position || (this.joypads.length);
             this.joypads[position] = joypad;
             
-            if (typeof this.oninsertjoypad === "function")
+            if (joypad && typeof this.oninsertjoypad === "function")
                 setTimeout(this.oninsertjoypad.bind(null, {target: this}), 1);
             
             return this.joypads[position];
         },
         removeJoypad: function(position) {
             position = arguments.length ? position : (this.joypads.length - 1);
-            var joypad = this.joypads[position];
+            var removedJoypad = this.joypads[position];
             this.joypads[position] = undefined;
             
-            if (typeof this.onremovejoypad === "function")
+            if (removedJoypad && typeof this.onremovejoypad === "function")
                 setTimeout(this.onremovejoypad.bind(null, {target: this}), 1);
             
-            return joypad;
+            return removedJoypad;
         },
         removeAllJoypads: function() {
+            var removedJoypads = this.joypads.length;
             this.joypads = [];
             
-            if (typeof this.onremovejoypad === "function")
+            if (removedJoypads && typeof this.onremovejoypad === "function")
                 setTimeout(this.onremovejoypad.bind(null, {target: this}), 1);
         },
         

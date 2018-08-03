@@ -162,6 +162,7 @@
             
             var nesFile = new Nestled.File;
             nesFile.onload = function(e) {
+                nes.removeCartridge();
                 if (nesFile.isValid) {
                     if (cartridge.createFromFile(e.target)) {
                         nes.insertCartridge(cartridge);
