@@ -105,9 +105,12 @@
                 if (curPos < file.data.byteLength)
                     this.name = String.fromCharCode.apply(null, new Uint8Array(file.data.slice(curPos))).replace(/\0/g, '');
                 else
-                    this.name = file.name;
+                    this.name = file.name.replace( /\.[A-Za-z0-9_]+$/, '')
+                                         .replace( /\s?\((U|E|Unk|Unl|1|4|A|J|B|K|C|NL|PD|F|S|FC|SW|FN|G|UK|GR|HK|I|H)+\)|\s?\[(!|a|p|b|t|f|T[+-]|h|o)+\]/g, '')
+                                         .trim();
+                
+                file.updateStatus("Successfully loaded " + file.name)
             
-                file.updateStatus("Successfully loaded " + this.name)
                 return true;
             } else {
                 file.updateStatus(file.name + " is invalid");
