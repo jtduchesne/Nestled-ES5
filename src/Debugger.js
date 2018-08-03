@@ -11,16 +11,24 @@
         //source: An object that responds to #attachOutput(output)
         //target: Canvas object -OR- DOM id of Canvas element
         bindImageOutput: function(name, opts) {
+            var source = opts['source'];
             var target = opts['target'];
             if (typeof target === 'string')
                 target = document.getElementById(target);
-            this.outputs[name] = {type: 'image', source: opts['source'], target: target};
+            
+            if (!(source && (typeof source.attachOutput === 'function'))) 
+                console.warn("Nestled: Debugger '" + name + "'s source must respond to #attachOutput.");
+            else if (!(target && (target.nodeName === "CANVAS"))) 
+                console.warn("Nestled: Debugger '" + name + "'s target must be a CANVAS.");
+            else
+                this.outputs[name] = {type: 'image', source: opts['source'], target: target};
         },
-        //source:   An Object (the name of the property to watch will then be the value of 'name')
+        
+        //source:   A function returning a string
+        //          -OR- An Object (The 'name' argument will then also be used as its property to watch)
         //          -OR- An Array containing: [Object, 'property to watch']
-        //          -OR- A function returning a string
         //target:   Any element -OR- DOM id of an element with an .innerText property
-        //modifier: The name of a preset modifier [Binary, Hex, Round, StatusFlags] (Default: none)
+        //modifier: The name of a preset modifier [Binary, Hex, Byte, Word, Round, StatusFlags] (Default: none)
         //interval: Number of milliseconds between updates (Default: 300ms)
         bindTextOutput: function(name, opts) {
             var type;
@@ -35,10 +43,15 @@
             var target = opts['target'];
             if (typeof target === 'string')
                 target = document.getElementById(target);
-            this.outputs[name] = {type: type, source: source, target: target,
-                                              modifier: opts['modifier'],
-                                              interval: opts['interval'] || 300};
+            
+            if (!(target && (typeof target.innerText !== "undefined"))) 
+                console.warn("Nestled: Debugger '" + name + "'s target must have an .innerText property.");
+            else
+                this.outputs[name] = {type: type, source: source, target: target,
+                                                  modifier: opts['modifier'],
+                                                  interval: opts['interval'] || 300};
         },
+        
         //source:   An Array or Array-like object reference
         //target:   Any block element -OR- DOM id of a block element
         //interval: Number of milliseconds between updates (Default: 300ms)
