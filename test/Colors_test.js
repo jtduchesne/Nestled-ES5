@@ -21,7 +21,7 @@ describe("Nestled", function() {
         
         //-------------------------------------------------------------------------------//
         
-        // ( Color #2 is 0xFF901008 (low-endian) )
+        // ( Color #2 is 0x081090FF )
         describe("#getR(index)", function() {
             it("returns the Red portion of the indexed color", function() {
                 expect(subject.getR(2)).to.equal(0x08); });
@@ -36,7 +36,7 @@ describe("Nestled", function() {
         });
         describe("#getPixel(index)", function() {
             it("returns the indexed color", function() {
-                expect(subject.getPixel(2)).to.equal(0xFF901008); });
+                expect(subject.getPixel(2)).to.equal(0x081090FF); });
         });
     });
 });

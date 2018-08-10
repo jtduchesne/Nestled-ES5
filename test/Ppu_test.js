@@ -390,7 +390,7 @@ describe("Nestled", function() {
                     
                     it("writes to palette data", function() {
                         subject.write(0x2007, 0x2A);
-                        expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x2A);
+                        expect(subject.bkgPalette.data[0]).to.equal(0x2A);
                     });
                 });
             });
@@ -512,38 +512,38 @@ describe("Nestled", function() {
         describe("#writePalette(address, data)", function() {
             it("writes to bkgPalette when address [0x3F01-0x3F0F]", function() {
                 subject.writePalette(0x3F01, 0x15);
-                expect(subject.bkgPalette.rawBuffer[1]).to.equal(0x15);
+                expect(subject.bkgPalette.data[1]).to.equal(0x15);
             });
             it("writes to sprPalette when address [0x3F11-0x3F1F]", function() {
                 subject.writePalette(0x3F11, 0x15);
-                expect(subject.sprPalette.rawBuffer[1]).to.equal(0x15);
+                expect(subject.sprPalette.data[1]).to.equal(0x15);
             });
             it("writes to bkgPalette when address 0x3F0[0,4,8,C]", function() {
                 subject.writePalette(0x3F00, 0x15);
-                expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x15);
+                expect(subject.bkgPalette.data[0]).to.equal(0x15);
                 subject.writePalette(0x3F04, 0x16);
-                expect(subject.bkgPalette.rawBuffer[4]).to.equal(0x16);
+                expect(subject.bkgPalette.data[4]).to.equal(0x16);
                 subject.writePalette(0x3F08, 0x17);
-                expect(subject.bkgPalette.rawBuffer[8]).to.equal(0x17);
+                expect(subject.bkgPalette.data[8]).to.equal(0x17);
                 subject.writePalette(0x3F0C, 0x18);
-                expect(subject.bkgPalette.rawBuffer[12]).to.equal(0x18);
+                expect(subject.bkgPalette.data[12]).to.equal(0x18);
             });
             it("also writes to bkgPalette when address 0x3F1[0,4,8,C]", function() {
                 subject.writePalette(0x3F10, 0x15);
-                expect(subject.bkgPalette.rawBuffer[0]).to.equal(0x15);
-                expect(subject.sprPalette.rawBuffer[0]).to.equal(0x10);
+                expect(subject.bkgPalette.data[0]).to.equal(0x15);
+                expect(subject.sprPalette.data[0]).to.equal(0x10);
                 
                 subject.writePalette(0x3F14, 0x16);
-                expect(subject.bkgPalette.rawBuffer[4]).to.equal(0x16);
-                expect(subject.sprPalette.rawBuffer[4]).to.equal(0x14);
+                expect(subject.bkgPalette.data[4]).to.equal(0x16);
+                expect(subject.sprPalette.data[4]).to.equal(0x14);
                 
                 subject.writePalette(0x3F18, 0x17);
-                expect(subject.bkgPalette.rawBuffer[8]).to.equal(0x17);
-                expect(subject.sprPalette.rawBuffer[8]).to.equal(0x18);
+                expect(subject.bkgPalette.data[8]).to.equal(0x17);
+                expect(subject.sprPalette.data[8]).to.equal(0x18);
                 
                 subject.writePalette(0x3F1C, 0x18);
-                expect(subject.bkgPalette.rawBuffer[12]).to.equal(0x18);
-                expect(subject.sprPalette.rawBuffer[12]).to.equal(0x1C);
+                expect(subject.bkgPalette.data[12]).to.equal(0x18);
+                expect(subject.sprPalette.data[12]).to.equal(0x1C);
             });
         });
     });

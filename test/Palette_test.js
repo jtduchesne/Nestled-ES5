@@ -27,7 +27,7 @@ describe("Nestled", function() {
             beforeEach(function() {
                 for (var paletteIndex=0; paletteIndex<subject.palettesCount; paletteIndex++)
                     for (var colorIndex=0; colorIndex<subject.colorsCount; colorIndex++)
-                        subject.rawBuffer[paletteIndex*subject.colorsCount+colorIndex] =
+                        subject.data[paletteIndex*subject.colorsCount+colorIndex] =
                             paletteIndex*10 + colorIndex;
             });
             

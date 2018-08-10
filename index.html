@@ -191,23 +191,21 @@
             
             debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});
             
+            debug.enableAll();
+            
             nes.onpower = function(e) {
                 if (e.target.isPowered) {
-                    debug.enableAll();
                     pauseButton.disabled = false;
                 } else {
-                    debug.disableAll();
                     pauseButton.disabled = true;
                 }
                 frontLED.className = e.target.frontLEDState();
             };
             nes.onpauseemu = function(e) {
-                debug.disableAll();
                 frontLED.className = "paused";
                 pauseButton.value = "Resume";
             };
             nes.onresumeemu = function(e) {
-                debug.enableAll();
                 frontLED.className = e.target.frontLEDState();
                 pauseButton.value = "Pause";
             };
