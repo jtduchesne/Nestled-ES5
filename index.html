@@ -45,10 +45,6 @@
                 justify-content: space-between;
                 align-items: center;
             }
-            #debug_screen p {
-                display: inline-block;
-                color: #FFF;
-            }
             #exec_window {
                 border: 1px solid #ccc;
                 width: 256px;
@@ -103,10 +99,7 @@
                     <div id="debug_screen">
                         <canvas id="debug_bkg_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_spr_palette" width="120" height="32" moz-opaque></canvas>
-                        <canvas id="debug_colors" width="240" height="32" moz-opaque></canvas>
-                        <p>A: 0x<span id="debug_A">00</span> X: 0x<span id="debug_X">00</span> Y: 0x<span id="debug_Y">00</span><br/>
-                           P: 0x<span id="debug_P">00 [--------]</span> SP: 0x<span id="debug_SP">00</span><br/>
-                           PC: 0x<span id="debug_PC">0000</span></p>
+                        <canvas id="debug_colors" width="256" height="32" moz-opaque></canvas>
                     </div>
                     <div id="exec_window" class="chunker scroll">
                         <ol class="chunker content">
@@ -181,13 +174,6 @@
             debug.bindImageOutput('BkgPalette', {source: nes.ppu.bkgPalette, target: 'debug_bkg_palette'});
             debug.bindImageOutput('SprPalette', {source: nes.ppu.sprPalette, target: 'debug_spr_palette'});
             debug.bindImageOutput('Colors',     {source: nes.ppu.colors, target: 'debug_colors'});
-            
-            debug.bindTextOutput('A',  {source: nes.cpu, target: 'debug_A',  modifier: 'Byte'});
-            debug.bindTextOutput('X',  {source: nes.cpu, target: 'debug_X',  modifier: 'Byte'});
-            debug.bindTextOutput('Y',  {source: nes.cpu, target: 'debug_Y',  modifier: 'Byte'});
-            debug.bindTextOutput('P',  {source: nes.cpu, target: 'debug_P',  modifier: 'StatusFlags'});
-            debug.bindTextOutput('SP', {source: nes.cpu, target: 'debug_SP', modifier: 'Byte'});
-            debug.bindTextOutput('PC', {source: nes.cpu, target: 'debug_PC', modifier: 'Word'});
             
             debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});
             
