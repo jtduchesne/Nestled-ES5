@@ -25,7 +25,7 @@
         else
             this.detachOutput();
         
-        this.getPixel = function(index) { return pixels.getUint32((index%64)*4, true); };
+        this.getPixel = function(index) { return pixels.getUint32((index%64)*4); };
         this.getR = function(index) { return pixels.getUint8(index*4+0); };
         this.getG = function(index) { return pixels.getUint8(index*4+1); };
         this.getB = function(index) { return pixels.getUint8(index*4+2); };

@@ -37,6 +37,10 @@
         
         //===============================================================//
         
+        getPixel: function(paletteIndex, colorIndex) {
+            return this.pixels.getUint32((paletteIndex*this.colorsCount + colorIndex)*4);
+        },
+        
         getByte: function(paletteIndex, colorIndex) {
             return this.data[paletteIndex*this.colorsCount + colorIndex];
         },
@@ -44,7 +48,7 @@
             var offset = paletteIndex*this.colorsCount + colorIndex;
             this.data[offset] = value;
             
-            this.pixels.setUint32(offset*4, this.colors.getPixel(value), true);
+            this.pixels.setUint32(offset*4, this.colors.getPixel(value));
             this.context.putImageData(this.imageData, 0, 0);
             this.nextUpdate = this.nextUpdate || window.requestAnimationFrame(this.updateOutput.bind(this));
         },
@@ -55,7 +59,7 @@
             var end = (offset+values.length > max) ? max-offset : values.length;
             for (var i=0; i<end; i++) {
                 this.data[offset+i] = values[i];
-                this.pixels[offset+i] = this.colors.getPixel(values[i]);
+                this.pixels.setUint32((offset+i)*4, this.colors.getPixel(values[i]));
             }
             this.context.putImageData(this.imageData,0,0);
         },
