@@ -13,6 +13,10 @@
         //Object Attribute Memory
         this.oam = new Array(0x100);
         
+        //Pattern Tables
+        this.patternTables = [new Nestled.PatternTable(this, 0x0000),
+                              new Nestled.PatternTable(this, 0x1000)];
+        
         //Palettes
         this.colors = new Nestled.Colors;
         this.bkgPalette = new Nestled.Palette({colors: this.colors});
@@ -71,14 +75,20 @@
             this.clearScroll();
         },
         
+        //== Rendering ==================================================//
+        renderFrame: function() {
+            this.setVBlank();
+            if (this.nmiEnabled) this.bus.cpu.doNMI();
+        },
+        
         //== Registers ==================================================//
         clearControlRegister: function() {
             this.baseNametableAddress = 0x2000; //[0x2000,0x2400,0x2800,0x2C00]
             this.addToXScroll = 0;              //[0,256]
             this.addToYScroll = 0;              //[0,240]
             this.addressIncrement = 1;          //[1,32]
-            this.sprPatternTableAddress = 0;    //[0x0000,0x1000]
-            this.bkgPatternTableAddress = 0;    //[0x0000,0x1000]
+            this.sprPatternTable = this.patternTables[0];
+            this.bkgPatternTable = this.patternTables[0];
             this.sprite8x16 = 0;
             this.nmiEnabled = 0;
         },
@@ -113,12 +123,6 @@
         },
         clearReadBuffer: function() {
             this.readBuffer = 0x00;
-        },
-        
-        //== Rendering ==================================================//
-        renderFrame: function() {
-            this.setVBlank();
-            if (this.nmiEnabled) this.bus.cpu.doNMI();
         },
         
         //== I/O access =================================================//
@@ -158,8 +162,10 @@
                 this.addToXScroll = (data&0x1) ? 256 : 0;
                 this.addToYScroll = (data&0x2) ? 240 : 0;
                 this.addressIncrement = (data&0x04) ? 32 : 1;
-                this.sprPatternTableAddress = (data&0x08) ? 0x1000 : 0x0000;
-                this.bkgPatternTableAddress = (data&0x10) ? 0x1000 : 0x0000;
+                this.sprPatternTable = this.patternTables[(data&0x08) ? 1 : 0];
+                this.sprPatternTable.palette = this.sprPalette;
+                this.bkgPatternTable = this.patternTables[(data&0x10) ? 1 : 0];
+                this.bkgPatternTable.palette = this.bkgPalette;
                 this.sprite8x16 = data&0x20;
                 this.nmiEnabled = data&0x80;
                 break;

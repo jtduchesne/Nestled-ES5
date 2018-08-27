@@ -35,8 +35,6 @@ describe("Nestled", function() {
                 expect(subject.addToXScroll).to.equal(0);
                 expect(subject.addToYScroll).to.equal(0);
                 expect(subject.addressIncrement).to.equal(1);
-                expect(subject.sprPatternTableAddress).to.equal(0);
-                expect(subject.bkgPatternTableAddress).to.equal(0);
                 expect(subject.sprite8x16).to.equal(0);
                 expect(subject.nmiEnabled).to.equal(0);
             });
@@ -78,8 +76,6 @@ describe("Nestled", function() {
                 expect(subject.addToXScroll).to.equal(0);
                 expect(subject.addToYScroll).to.equal(0);
                 expect(subject.addressIncrement).to.equal(1);
-                expect(subject.sprPatternTableAddress).to.equal(0);
-                expect(subject.bkgPatternTableAddress).to.equal(0);
                 expect(subject.sprite8x16).to.equal(0);
                 expect(subject.nmiEnabled).to.equal(0);
             });
@@ -249,8 +245,8 @@ describe("Nestled", function() {
                         expect(subject.addToXScroll).to.equal(0);
                         expect(subject.addToYScroll).to.equal(0);
                         expect(subject.addressIncrement).to.equal(1);
-                        expect(subject.sprPatternTableAddress).to.equal(0x0000);
-                        expect(subject.bkgPatternTableAddress).to.equal(0x0000);
+                        expect(subject.sprPatternTable).to.eql(subject.patternTables[0]);
+                        expect(subject.bkgPatternTable).to.eql(subject.patternTables[0]);
                         expect(subject.sprite8x16).to.be.falsy;
                         expect(subject.vblank).to.be.falsy;
                     });
@@ -263,8 +259,8 @@ describe("Nestled", function() {
                         expect(subject.addToXScroll).to.equal(256);
                         expect(subject.addToYScroll).to.equal(240);
                         expect(subject.addressIncrement).to.equal(32);
-                        expect(subject.sprPatternTableAddress).to.equal(0x1000);
-                        expect(subject.bkgPatternTableAddress).to.equal(0x1000);
+                        expect(subject.sprPatternTable).to.eql(subject.patternTables[1]);
+                        expect(subject.bkgPatternTable).to.eql(subject.patternTables[1]);
                         expect(subject.sprite8x16).to.be.truthy;
                         expect(subject.nmiEnabled).to.be.truthy;
                     });

@@ -97,6 +97,8 @@
                         </canvas>
                     </div>
                     <div id="debug_screen">
+                        <canvas id="debug_pattern_table_left" width="128" height="128" moz-opaque></canvas>
+                        <canvas id="debug_pattern_table_right" width="128" height="128" moz-opaque></canvas>
                         <canvas id="debug_bkg_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_spr_palette" width="120" height="32" moz-opaque></canvas>
                         <canvas id="debug_colors" width="256" height="32" moz-opaque></canvas>
@@ -124,6 +126,7 @@
         
         <script src="src/PPU/Colors.js"></script>
         <script src="src/PPU/Palette.js"></script>
+        <script src="src/PPU/PatternTable.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Counter.js"></script>
         <script src="src/Journal.js"></script>
@@ -171,6 +174,8 @@
                 return Math.round(nes.counter.emulationSpeed*10)/10;
             }, target: 'speed'});
             
+            debug.bindImageOutput('LeftPatternTable', {source: nes.ppu.patternTables[0], target: 'debug_pattern_table_left'});
+            debug.bindImageOutput('RightPatternTable', {source: nes.ppu.patternTables[1], target: 'debug_pattern_table_right'});
             debug.bindImageOutput('BkgPalette', {source: nes.ppu.bkgPalette, target: 'debug_bkg_palette'});
             debug.bindImageOutput('SprPalette', {source: nes.ppu.sprPalette, target: 'debug_spr_palette'});
             debug.bindImageOutput('Colors',     {source: nes.ppu.colors, target: 'debug_colors'});
@@ -194,6 +199,12 @@
             nes.onresumeemu = function(e) {
                 frontLED.className = e.target.frontLEDState();
                 pauseButton.value = "Pause";
+            };
+            
+            nes.oninsertcartridge = function(e) {
+                e.target.ppu.patternTables.forEach(function(patternTable) {
+                    patternTable.renderAllPatterns();
+                });
             };
             
             var fileSelect = document.getElementById('file_select_button');
