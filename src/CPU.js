@@ -9,7 +9,7 @@
         this.bus = nes;
         
         //RAM
-        this.ram = new Array(0x800);
+        this.ram = new Uint8Array(0x800);
         
         //Addressing modes lookup table
         this.addressLookup = [

@@ -9,9 +9,9 @@
         this.bus = nes;
         
         //Internal Video RAM (or Character Internal RAM)
-        this.vram = [new Array(0x400), new Array(0x400)];
+        this.vram = [new Uint8Array(0x400), new Uint8Array(0x400)];
         //Object Attribute Memory
-        this.oam = new Array(0x100);
+        this.oam = new Uint8Array(0x100);
         
         //Pattern Tables
         this.patternTables = [new Nestled.PatternTable(this, 0x0000),
@@ -34,7 +34,7 @@
         
         powerOn:  function() {
             this.isPowered = true;
-        
+            
             //This will be called only once and will then self-destruct,
             //letting the one in the prototype do its work.
             var coldPpu = this;
