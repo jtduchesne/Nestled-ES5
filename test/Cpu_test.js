@@ -93,10 +93,10 @@ describe("Nestled", function() {
         describe("#write(address,data)", function() {
             it("writes to RAM when address is between [0x0000, 0x07FF]", function() {
                 subject.write(0x000, 0xFF);
-                expect(subject).to.have.deep.property('ram[0]', 0xFF); });
+                expect(subject).to.have.nested.property('ram[0]', 0xFF); });
             it("writes to SRAM when address is between [0x6000, 0x7FFF]", function() {
                 subject.write(0x6000, 0xFF);
-                expect(subject.bus.cartridge).to.have.deep.property('sram[0]', 0xFF); });
+                expect(subject.bus.cartridge).to.have.nested.property('sram[0]', 0xFF); });
         });
         
         //-------------------------------------------------------------------------------//
@@ -114,10 +114,10 @@ describe("Nestled", function() {
                 it("decrements SP once", function() {
                     expect(subject.SP).to.equal((prevSP-1) & 0xFF); });
                 it("writes to 0x1FF the first time", function() {
-                    expect(subject).to.have.deep.property('ram[511]', 0xEF); });
+                    expect(subject).to.have.nested.property('ram[511]', 0xEF); });
                 it("writes to 0x1FE the second time", function() {
                     subject.pushByte(0xCD);
-                    expect(subject).to.have.deep.property('ram[510]', 0xCD); });
+                    expect(subject).to.have.nested.property('ram[510]', 0xCD); });
             });
             describe("#pushWord(value)", function() {
                 beforeEach(function() { subject.pushWord(0xCDEF); });
@@ -125,13 +125,13 @@ describe("Nestled", function() {
                 it("decrements SP twice", function() {
                     expect(subject.SP).to.equal((prevSP-2) & 0xFF); });
                 it("writes to [0x1FE,0x1FF] the first time", function() {
-                    expect(subject).to.have.deep.property('ram[511]', 0xCD);
-                    expect(subject).to.have.deep.property('ram[510]', 0xEF);
+                    expect(subject).to.have.nested.property('ram[511]', 0xCD);
+                    expect(subject).to.have.nested.property('ram[510]', 0xEF);
                 });
                 it("writes to [0x1FC,0x1FD] the second time", function() {
                     subject.pushWord(0x89AB);
-                    expect(subject).to.have.deep.property('ram[509]', 0x89);
-                    expect(subject).to.have.deep.property('ram[508]', 0xAB);
+                    expect(subject).to.have.nested.property('ram[509]', 0x89);
+                    expect(subject).to.have.nested.property('ram[508]', 0xAB);
                 });
             });
             describe("#pullByte()", function() {

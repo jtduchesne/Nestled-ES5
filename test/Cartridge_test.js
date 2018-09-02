@@ -118,12 +118,12 @@ describe("Nestled", function() {
         describe("#cpuWrite(address,data)", function() {
             it("writes to SRAM when address is between [0x6000, 0x7FFF]", function() {
                 subject.cpuWrite(0x6000, 0xFF);
-                expect(subject).to.have.deep.property('sram[0]', 0xFF); });
+                expect(subject).to.have.nested.property('sram[0]', 0xFF); });
             it("cannot write to PRG-ROM", function() {
                 subject.cpuWrite(0x8000, 0xFF);
-                expect(subject).to.have.deep.property('PRGRom[0][0]', 0x20);
+                expect(subject).to.have.nested.property('PRGRom[0][0]', 0x20);
                 subject.cpuWrite(0xC000, 0xFF);
-                expect(subject).to.have.deep.property('PRGRom[1][0]', 0x30);
+                expect(subject).to.have.nested.property('PRGRom[1][0]', 0x30);
             });
         });
         
