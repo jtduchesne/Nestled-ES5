@@ -135,7 +135,10 @@ describe("Nestled", function() {
         });
 
         describe("#ppuWrite(address,data)", function() {
-            it("does nothing");
+            it("cannot write to CHR-ROM", function() {
+                subject.ppuWrite(0x0000, 0xFF);
+                expect(subject).to.have.nested.property('CHRRom[0][0]', 0x40);
+            });
         });
         
         //-------------------------------------------------------------------------------//

@@ -18,17 +18,20 @@
     */
     function Cartridge(opts) {
         if (opts && opts['file'])
-            this.createFromFile(file);
+            this.createFromFile(opts['file']);
         
         this.name = opts && opts['name'];
-        this.clearPRGData();
-        this.clearCHRData();
+        this.initPRGData();
+        this.initCHRData();
+        
         var pageIndex;
         if (opts && opts['PRGRom']) {
+            this.clearPRGData();
             for (pageIndex = 0; pageIndex < opts['PRGRom'].length; pageIndex++)
                 this.addPRGData(opts['PRGRom'][pageIndex]);
         }
         if (opts && opts['CHRRom']) {
+            this.clearCHRData();
             for (pageIndex = 0; pageIndex < opts['CHRRom'].length; pageIndex++)
                 this.addCHRData(opts['CHRRom'][pageIndex]);
         }
@@ -46,6 +49,8 @@
     Cartridge.prototype = {
         constructor: Cartridge,
         
+        initPRGData: function() {
+            this.clearPRGData(); },
         addPRGData: function(data) {
             this.PRGRom.push(this.normalizeData(data));
             this.highPRGPageIndex = this.PRGRom.length - 1;
@@ -53,6 +58,10 @@
         clearPRGData: function() {
             this.PRGRom = [];
             this.highPRGPageIndex = null;
+        },
+        initCHRData: function() {
+            this.clearCHRData();
+            this.CHRRom[0] = this.CHRRam = [];
         },
         addCHRData: function(data) {
             this.CHRRom.push(this.normalizeData(data)); },
@@ -96,11 +105,15 @@
                     curPos += 0x4000; }
                 file.updateStatus(prgromPage*16 + "kb of PRG-Rom", true)
                 
-                this.clearCHRData();
-                for (var chrromPage = 0; chrromPage < header[5]; chrromPage++) {
-                    this.addCHRData(file.data.slice(curPos, curPos+0x2000));
-                    curPos += 0x2000; }
-                file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true)
+                if (header[5]) {
+                    this.clearCHRData();
+                    for (var chrromPage = 0; chrromPage < header[5]; chrromPage++) {
+                        this.addCHRData(file.data.slice(curPos, curPos+0x2000));
+                        curPos += 0x2000; }
+                    file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true)
+                } else {
+                    file.updateStatus("No CHR-Rom present, so 2kb of CHR-Ram assumed");
+                }
             
                 if (curPos < file.data.byteLength)
                     this.name = String.fromCharCode.apply(null, new Uint8Array(file.data.slice(curPos))).replace(/\0/g, '');
@@ -143,7 +156,7 @@
         },
         cpuWrite: function(address, data) {
             if (address < 0x8000) {
-                this.sram[address & 0x1FFF] = (data & 0xFF);
+                this.sram[address & 0x1FFF] = data;
             }
         },
         
@@ -152,7 +165,7 @@
             return this.CHRRom[0][address & 0x1FFF];
         },
         ppuWrite: function(address, data) {
-            return;
+            this.CHRRam[address & 0x1FFF] = data;
         },
         
         //== CIRAM /CE (Pin22) and CIRAM A10 (Pin57) ====================//
