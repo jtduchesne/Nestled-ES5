@@ -197,7 +197,7 @@
             "NOP 0xh", "STA ($h,X)", "NOP 0xh", "NOP ($h,X)", "STY $h",    "STA $h",    "STX $h",    "NOP $h",
             "DEY",     "NOP 0xh",    "TXA",     "NOP 0xh",    "STY $hh",   "STA $hh",   "STX $hh",   "NOP $hh",
             "BCC +d",  "STA ($h),Y", "KIL",     "NOP ($h),Y", "STY $h,X",  "STA $h,X",  "STX $h,Y",  "NOP $h,Y",
-            "TYA",     "STA $hh,Y",  "TXS",     "NOP $hh,Y",  "SHY $hh,X", "STA $hh,X", "SHX $hh,Y", "NOP $hh,Y",
+            "TYA",     "STA $hh,Y",  "TXS",     "NOP $hh,Y",  "NOP $hh,X", "STA $hh,X", "NOP $hh,Y", "NOP $hh,Y",
             "LDY 0xh", "LDA ($h,X)", "LDX 0xh", "NOP ($h,X)", "LDY $h",    "LDA $h",    "LDX $h",    "NOP $h",
             "TAY",     "LDA 0xh",    "TAX",     "NOP 0xh",    "LDY $hh",   "LDA $hh",   "LDX $hh",   "NOP $hh",
             "BCS +d",  "LDA ($h),Y", "KIL",     "NOP ($h),Y", "LDY $h,X",  "LDA $h,X",  "LDX $h,Y",  "NOP $h,Y",

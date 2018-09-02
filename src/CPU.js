@@ -42,7 +42,7 @@
             this.RTS, this.ADC, this.KIL, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP, this.PLA, this.ADC, this.ROR, this.NOP, this.JMP, this.ADC, this.ROR, this.NOP,
             this.BVS, this.ADC, this.KIL, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP, this.SEI, this.ADC, this.NOP, this.NOP, this.NOP, this.ADC, this.ROR, this.NOP,
             this.NOP, this.STA, this.NOP, this.NOP, this.STY, this.STA, this.STX, this.NOP, this.DEY, this.NOP, this.TXA, this.NOP, this.STY, this.STA, this.STX, this.NOP,
-            this.BCC, this.STA, this.KIL, this.NOP, this.STY, this.STA, this.STX, this.NOP, this.TYA, this.STA, this.TXS, this.NOP, this.SHY, this.STA, this.SHX, this.NOP,
+            this.BCC, this.STA, this.KIL, this.NOP, this.STY, this.STA, this.STX, this.NOP, this.TYA, this.STA, this.TXS, this.NOP, this.NOP, this.STA, this.NOP, this.NOP,
             this.LDY, this.LDA, this.LDX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP, this.TAY, this.LDA, this.TAX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP,
             this.BCS, this.LDA, this.KIL, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP, this.CLV, this.LDA, this.TSX, this.NOP, this.LDY, this.LDA, this.LDX, this.NOP,
             this.CPY, this.CMP, this.NOP, this.NOP, this.CPY, this.CMP, this.DEC, this.NOP, this.INY, this.CMP, this.DEX, this.NOP, this.CPY, this.CMP, this.DEC, this.NOP,

@@ -470,6 +470,20 @@ describe("Nestled", function() {
                 subject.PC = 0x0000;
             });
             
+            it("never throws an error", function() {
+                pseudoNesWithPPU = {cartridge: new Nestled.Cartridge({sram: sram.slice(0), PRGRom: PRGRom}),
+                                    ppu: new Nestled.Ppu(pseudoNes)};
+                subject   = new Nestled.Cpu(pseudoNesWithPPU);
+                subject.ram = Array(0x300).fill(0);
+                for (var i=0; i<256; i++)
+                    subject.ram[0x200+i] = i;
+                
+                for (i=0x0200; i<0x0300; i++) {
+                    subject.PC = i;
+                    expect(subject.doInstruction.bind(subject)).to.not.throw();
+                }
+            });
+            
             describe("#BRK()",         function() {
                 beforeEach(function() {
                     subject.ram = [0x00, 0x00];
