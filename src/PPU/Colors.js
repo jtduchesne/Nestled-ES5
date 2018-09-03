@@ -8,7 +8,7 @@
     function Colors(opts) {
         this.initCanvas();
         
-        this.context = this.canvas.getContext('2d');
+        this.context = this.canvas.getContext('2d', {alpha: false});
         this.imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
         
         var pixels = new DataView(this.imageData.data.buffer);
@@ -55,7 +55,7 @@
         
         attachOutput: function(output) {
             this.output = output;
-            this.outputContext = this.output.getContext('2d');
+            this.outputContext = this.output.getContext('2d', {alpha: false});
             
             this.outputContext.imageSmoothingEnabled = false;
             

@@ -16,7 +16,7 @@
         this.canvas.width = 128;
         this.canvas.height = 128;
         
-        this.context = this.canvas.getContext('2d');
+        this.context = this.canvas.getContext('2d', {alpha: false});
         this.imageData = this.context.createImageData(128, 128);
         this.pixels = new DataView(this.imageData.data.buffer);
         
@@ -80,7 +80,7 @@
         
         attachOutput: function(output) {
             this.output = output;
-            this.outputContext = this.output.getContext('2d');
+            this.outputContext = this.output.getContext('2d', {alpha: false});
             
             this.outputContext.imageSmoothingEnabled = false;
             

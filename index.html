@@ -34,10 +34,11 @@
             #nes_screen {
                 background-color: #000;
                 width: 256px;
+                height: 240px;
                 margin: 5px;
             }
             #debug_screen {
-                background-color: #000;
+                background-color: #FFF;
                 width: 256px;
                 margin: 5px;
                 display: flex;
@@ -92,16 +93,16 @@
             <div class="container">
                 <div id="screens">
                     <div id="nes_screen">
-                        <canvas id="nes_output" width="256" height="240" moz-opaque>
+                        <canvas id="nes_output" width="256" height="240">
                             <div id="canvas_fallback"><p>Your browser doesn't support HTML5 <code>&lt;canvas&gt;</code> elements. Upgrade your browser to run Nestled.</p></div>
                         </canvas>
                     </div>
                     <div id="debug_screen">
-                        <canvas id="debug_pattern_table_left" width="128" height="128" moz-opaque></canvas>
-                        <canvas id="debug_pattern_table_right" width="128" height="128" moz-opaque></canvas>
-                        <canvas id="debug_bkg_palette" width="120" height="32" moz-opaque></canvas>
-                        <canvas id="debug_spr_palette" width="120" height="32" moz-opaque></canvas>
-                        <canvas id="debug_colors" width="256" height="32" moz-opaque></canvas>
+                        <canvas id="debug_pattern_table_left" width="128" height="128"></canvas>
+                        <canvas id="debug_pattern_table_right" width="128" height="128"></canvas>
+                        <canvas id="debug_bkg_palette" width="120" height="48"></canvas>
+                        <canvas id="debug_spr_palette" width="120" height="48"></canvas>
+                        <canvas id="debug_colors" width="256" height="48"></canvas>
                     </div>
                     <div id="exec_window" class="chunker scroll">
                         <ol class="chunker content">
