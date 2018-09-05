@@ -1,11 +1,10 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Palette properties:
-      colors => Nestled.Colors
       palettesCount => Integer (Default: 4)
       colorsCount   => Integer (Default: 4)
+      colors => Nestled.Colors
       output => Canvas object
     */
     function Palette(opts) {
@@ -92,7 +91,7 @@
                 this.outputContext.fill();
             }
         }
-    }
+    };
 
     Nestled.Palette = Palette;
 })(window.Nestled = window.Nestled || {});

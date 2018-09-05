@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     File properties:
       file   => File object (Can only be passed as argument to constructor)
@@ -103,7 +102,7 @@
                 this.updateStatus("An error occurred while reading " + (this.name || "this file"));
             }
         }
-    }
+    };
     
     Nestled.File = File;
 })(window.Nestled = window.Nestled || {});

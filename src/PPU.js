@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Ppu properties:
       nes => Nestled.Nes
@@ -183,7 +182,7 @@
                 this.oamAddress = data;
                 break;
             case 0x4: //$2004 OAM Data
-                this.oam[this.oamAddress] = data
+                this.oam[this.oamAddress] = data;
                 this.oamAddress++;
                 break;
             case 0x5: //$2005 Scroll Register
@@ -246,7 +245,7 @@
                 (address&0x10 ? this.sprPalette : 
                                 this.bkgPalette).setByte(paletteIndex, colorIndex, data);
         }
-    }
+    };
     
     Nestled.Ppu = Ppu;
 })(window.Nestled = window.Nestled || {});

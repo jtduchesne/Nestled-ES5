@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     PatternTable properties:
       ppu => Nestled.Ppu
@@ -104,7 +103,7 @@
                 this.outputContext.fill();
             }
         }
-    }
+    };
 
     Nestled.PatternTable = PatternTable;
 })(window.Nestled = window.Nestled || {});

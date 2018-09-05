@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Cpu properties:
       nes => Nestled.Nes
@@ -517,7 +516,7 @@
         // Others
         NOP: function(operand) { operand.call(this); }, //Does nothing
         KIL: function(operand) { this.doRESET(); }      //Crashes the machine!
-    }
+    };
     
     Nestled.Cpu = Cpu;
 })(window.Nestled = window.Nestled || {});

@@ -1,6 +1,6 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
+    
     function Debugger(opts) {
         this.outputs = {};
     }
@@ -234,7 +234,7 @@
             return "0x"+zeroFill(pc.toString(16), 4)+"  "+
                    this.instructionNameLookup[opcode].replace(/\+?d|h{1,2}/g, formatInstructionName);
         }
-    }
+    };
 
     Nestled.Debugger = Debugger;
 })(window.Nestled = window.Nestled || {});

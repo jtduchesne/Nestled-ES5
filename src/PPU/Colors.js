@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Colors properties:
       output  => Canvas object
@@ -75,7 +74,7 @@
                 this.outputContext.fill();
             }
         }
-    }
+    };
 
     Nestled.Colors = Colors;
 })(window.Nestled = window.Nestled || {});

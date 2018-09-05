@@ -1,6 +1,6 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
+    
     function NoCartridge(opts) {
         this.name = "No Cartridge";
         this.mapperNumber = 0;

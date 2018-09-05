@@ -1,6 +1,6 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
+    
     function Mapper(opts) {
     }
     
@@ -229,7 +229,7 @@
             "SAN GUO ZHI PIRATE",
             "DRAGON BALL PIRATE"
         ]
-    }
+    };
     
     Nestled.Mapper = Mapper;
 })(window.Nestled = window.Nestled || {});

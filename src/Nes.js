@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Nes properties:
       cartridge => Nestled.Cartridge
@@ -91,7 +90,7 @@
             
             if (typeof currentNes.onresumeemu === "function")
                 setTimeout(currentNes.onresumeemu.bind(null, {target: currentNes}), 1);
-        }
+        };
     }
 
     Nes.prototype = {
@@ -190,7 +189,7 @@
         //== Video output ================================//
         
         //== Audio output ================================//
-    }
+    };
     
     Nestled.Nes = Nes;
 })(window.Nestled = window.Nestled || {});

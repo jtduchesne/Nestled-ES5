@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Journal properties:
       resetInterval => Integer
@@ -30,7 +29,7 @@
         clear: function() {
             this.data.length = 0;
         }
-    }
+    };
 
     Nestled.Journal = Journal;
 })(window.Nestled = window.Nestled || {});

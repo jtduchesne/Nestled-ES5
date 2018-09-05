@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Cartridge properties:
       file   => File object (Can only be passed as argument to constructor,
@@ -92,7 +91,7 @@
                 this.fourscreenMirroring = !!(header[6]&0x8);
             
                 this.mapperNumber = (header[6]>>4) + (header[7]&0xF0);
-                file.updateStatus((new Nestled.Mapper).getFormattedName(this.mapperNumber), true)
+                file.updateStatus((new Nestled.Mapper).getFormattedName(this.mapperNumber), true);
             
                 var curPos = 0x10;
                 if (header[6]&0x4) curPos += 0x200;
@@ -103,14 +102,14 @@
                 for (var prgromPage = 0; prgromPage < header[4]; prgromPage++) {
                     this.addPRGData(file.data.slice(curPos, curPos+0x4000));
                     curPos += 0x4000; }
-                file.updateStatus(prgromPage*16 + "kb of PRG-Rom", true)
+                file.updateStatus(prgromPage*16 + "kb of PRG-Rom", true);
                 
                 if (header[5]) {
                     this.clearCHRData();
                     for (var chrromPage = 0; chrromPage < header[5]; chrromPage++) {
                         this.addCHRData(file.data.slice(curPos, curPos+0x2000));
                         curPos += 0x2000; }
-                    file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true)
+                    file.updateStatus(chrromPage*8 + "kb of CHR-Rom", true);
                 } else {
                     file.updateStatus("No CHR-Rom present, so 2kb of CHR-Ram assumed");
                 }
@@ -122,7 +121,7 @@
                                          .replace( /\s?\((U|E|Unk|Unl|1|4|A|J|B|K|C|NL|PD|F|S|FC|SW|FN|G|UK|GR|HK|I|H)+\)|\s?\[(!|a|p|b|t|f|T[+-]|h|o)+\]/g, '')
                                          .trim();
                 
-                file.updateStatus("Successfully loaded " + file.name)
+                file.updateStatus("Successfully loaded " + file.name);
             
                 return true;
             } else {
@@ -180,7 +179,7 @@
             else
                 return 0;
         }
-    }
+    };
     
     Nestled.Cartridge = Cartridge;
 })(window.Nestled = window.Nestled || {});

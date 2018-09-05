@@ -1,6 +1,5 @@
-"use strict";
-
 (function(Nestled, undefined) {
+    "use strict";
     /*
     Counter properties:
       expectedFrameTime => Integer
@@ -18,7 +17,7 @@
         
         this.init = function(startTime) {
             return lastFrameTime = lastLoopTime = startTime;
-        }
+        };
         this.start = function(startTime) {
             return Math.min(1000, startTime - lastLoopTime);
         };
