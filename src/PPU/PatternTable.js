@@ -11,13 +11,7 @@
         this.ppu = ppu;
         this.baseAddress = baseAddress;
         
-        this.canvas = document.createElement('canvas');
-        this.canvas.width = 128;
-        this.canvas.height = 128;
-        
-        this.context = this.canvas.getContext('2d', {alpha: false});
-        this.imageData = this.context.createImageData(128, 128);
-        this.pixels = new DataView(this.imageData.data.buffer);
+        this.initCanvas(128, 128);
         
         this.palette = (opts && opts['palette']) || this.greyPalette;
         
@@ -30,10 +24,14 @@
     PatternTable.prototype = {
         constructor: PatternTable,
         
-        initCanvas: function() {
+        initCanvas: function(width, height) {
             this.canvas = document.createElement('canvas');
-            this.canvas.width = 128;
-            this.canvas.height = 128;
+            this.canvas.width = width;
+            this.canvas.height = height;
+            
+            this.context = this.canvas.getContext('2d', {alpha: false});
+            this.imageData = this.context.createImageData(width, height);
+            this.pixels = new DataView(this.imageData.data.buffer);
         },
         
         greyPalette: (function() {

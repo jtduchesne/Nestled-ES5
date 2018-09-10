@@ -5,12 +5,9 @@
       output  => Canvas object
     */
     function Colors(opts) {
-        this.initCanvas();
+        this.initCanvas(16, 4);
         
-        this.context = this.canvas.getContext('2d', {alpha: false});
-        this.imageData = this.context.createImageData(this.canvas.width, this.canvas.height);
-        
-        var pixels = new DataView(this.imageData.data.buffer);
+        var pixels = this.pixels;
         for (var i=0; i<64; i++) { //Hardcoded to NTSC for now...
             pixels.setUint8(i*4+0, this.NTSC[i*3+0]);
             pixels.setUint8(i*4+1, this.NTSC[i*3+1]);
@@ -34,9 +31,13 @@
         constructor: Colors,
         
         canvas: document.createElement('canvas'),
-        initCanvas: function() {
-            this.canvas.width = 16;
-            this.canvas.height = 4;
+        initCanvas: function(width, height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+            
+            this.context = this.canvas.getContext('2d', {alpha: false});
+            this.imageData = this.context.createImageData(width, height);
+            this.pixels = new DataView(this.imageData.data.buffer);
         },
         
         //===============================================================//

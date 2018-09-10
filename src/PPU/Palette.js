@@ -10,14 +10,11 @@
     function Palette(opts) {
         this.palettesCount = (opts && opts['palettesCount']) || 4;
         this.colorsCount = (opts && opts['colorsCount']) || 4;
-        this.initCanvas();
+        this.colors = (opts && opts['colors']) || new Nestled.Colors;
         
-        this.context = this.canvas.getContext('2d', {alpha: false});
-        this.imageData = this.context.createImageData(this.colorsCount, this.palettesCount);
-        this.pixels = new DataView(this.imageData.data.buffer);
+        this.initCanvas(this.colorsCount, this.palettesCount);
         
         this.data = new Uint8Array(this.colorsCount*this.palettesCount);
-        this.colors = (opts && opts['colors']) || new Nestled.Colors;
         
         if (opts && opts['output'])
             this.attachOutput(opts['output']);
@@ -28,10 +25,14 @@
     Palette.prototype = {
         constructor: Palette,
         
-        initCanvas: function() {
+        initCanvas: function(width, height) {
             this.canvas = document.createElement('canvas');
-            this.canvas.width = this.colorsCount;
-            this.canvas.height = this.palettesCount;
+            this.canvas.width = width;
+            this.canvas.height = height;
+            
+            this.context = this.canvas.getContext('2d', {alpha: false});
+            this.imageData = this.context.createImageData(width, height);
+            this.pixels = new DataView(this.imageData.data.buffer);
         },
         
         //===============================================================//
