@@ -46,12 +46,14 @@
                 justify-content: space-between;
                 align-items: center;
             }
-            #exec_window {
+            /*#
+            exec_window {
                 border: 1px solid #ccc;
                 width: 256px;
                 text-align: left;
                 margin: 5px;
             }
+            */
             #canvas_fallback {
                 background-image: url(img/hqdefault.jpg);
                 background-size: 100% 100%;
@@ -85,7 +87,9 @@
             #front_led.paused { filter: hue-rotate(60deg) brightness(120%); }
             #pause_button { min-width: 75px; }
         </style>
+        <!--
         <link href="DataChunker.css" rel="stylesheet">
+        -->
     </head>
     <body>
         <main>
@@ -104,11 +108,13 @@
                         <canvas id="debug_spr_palette" width="120" height="48"></canvas>
                         <canvas id="debug_colors" width="256" height="48"></canvas>
                     </div>
+                    <!--
                     <div id="exec_window" class="chunker scroll">
                         <ol class="chunker content">
                             <li>No data</li>
                         </ol>
                     </div>
+                    -->
                 </div>
                 <p class="stats">
                     <span id="fps">0</span> fps (<span id="speed">0.0</span>% speed)
@@ -130,7 +136,9 @@
         <script src="src/PPU/PatternTable.js"></script>
         <script src="src/Ppu.js"></script>
         <script src="src/Counter.js"></script>
+        <!--
         <script src="src/Journal.js"></script>
+        -->
         <script src="src/Cpu.js"></script>
         <script src="src/Nes.js"></script>
         <script src="src/Cartridge.js"></script>
@@ -138,7 +146,9 @@
         <script src="src/Mapper.js"></script>
         <script src="src/File.js"></script>
         <script src="src/Debugger.js"></script>
+        <!--
         <script src="./DataChunker.js"></script>
+        -->
         
         <script type="text/javascript">
             var nes = new Nestled.Nes({video: document.getElementById('screen')});
@@ -181,7 +191,7 @@
             debug.bindImageOutput('SprPalette', {source: nes.ppu.sprPalette, target: 'debug_spr_palette'});
             debug.bindImageOutput('Colors',     {source: nes.ppu.colors, target: 'debug_colors'});
             
-            debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});
+            //debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});
             
             debug.enableAll();
             

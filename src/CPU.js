@@ -50,7 +50,7 @@
             this.BEQ, this.SBC, this.KIL, this.NOP, this.NOP, this.SBC, this.INC, this.NOP, this.SED, this.SBC, this.NOP, this.NOP, this.NOP, this.SBC, this.INC, this.NOP
         ];
         
-        this.journal = new Nestled.Journal;
+        //this.journal = new Nestled.Journal;
         
         this.powerOff();
     }
@@ -70,7 +70,7 @@
         
         powerOn:  function() {
             this.isPowered = true;
-            this.journal.clear();
+            //this.journal.clear();
             this.doRESET();
         },
         powerOff: function() {
@@ -105,9 +105,9 @@
             var pc = this.PC++;
             var opcode  = this.read(pc);
             var operand = this.read(pc+1);
-            var operandWord = operand + this.read(pc+2)*256;
+            //var operandWord = operand + this.read(pc+2)*256;
             
-            this.journal.push(pc, opcode, operandWord);
+            //this.journal.push(pc, opcode, operandWord);
             
             this.instructionLookup[opcode].call(this, function() {
                 return this.addressLookup[opcode].call(this, operand);
@@ -271,25 +271,25 @@
             this.pushWord(this.PC+1);
             this.pushByte(this.P);
             this.PC = this.readWord(0xFFFE);
-            this.journal.addBlank();
+            //this.journal.addBlank();
         },
         RTI: function(operand) { //Return from Interrupt
             this.P = this.pullByte();
             this.PC = this.pullWord();
-            this.journal.addBlank();
+            //this.journal.addBlank();
         },
         JSR: function(operand) { //Jump to Subroutine
             this.pushWord(this.PC+1);
             this.PC = operand.call(this);
-            this.journal.addBlank();
+            //this.journal.addBlank();
         },
         RTS: function(operand) { //Return from Subroutine
             this.PC = this.pullWord() + 1;
-            this.journal.addBlank();
+            //this.journal.addBlank();
         },
         JMP: function(operand) { //Jump to
             this.PC = operand.call(this);
-            this.journal.addBlank();
+            //this.journal.addBlank();
         },
         
         // Branching
