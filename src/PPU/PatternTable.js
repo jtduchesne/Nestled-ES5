@@ -5,20 +5,15 @@
       ppu => Nestled.Ppu
       baseAddress => [0x0000, 0x1000]
       palette => Nestled.Palette
-      output => Canvas object
     */
     function PatternTable(ppu, baseAddress, opts) {
         this.ppu = ppu;
         this.baseAddress = baseAddress;
         
-        this.initCanvas(128, 128);
-        
         this.palette = (opts && opts['palette']) || this.greyPalette;
         
-        if (opts && opts['output'])
-            this.attachOutput(opts['output']);
-        else
-            this.detachOutput();
+        this.initCanvas(128, 128);
+        this.output = new Nestled.Output(this.canvas);
     }
 
     PatternTable.prototype = {
@@ -70,37 +65,8 @@
                     this.pixels.setUint32((y*128 + x)*4, this.palette.getPixel(0, color));
                 }
             }
-            this.nextUpdate = this.nextUpdate || window.requestAnimationFrame(this.updateOutput.bind(this));
+            this.output.requestUpdate();
         },
-        
-        //===============================================================//
-        
-        attachOutput: function(output) {
-            this.output = output;
-            this.outputContext = this.output.getContext('2d', {alpha: false});
-            
-            this.outputContext.imageSmoothingEnabled = false;
-            
-            this.updateOutput();
-        },
-        detachOutput: function() {
-            this.clearOutput();
-            this.nextUpdate = -1;
-        },
-        updateOutput: function() {
-            if (this.outputContext) {
-                this.outputContext.drawImage(this.canvas, 0, 0, this.output.width, this.output.height);
-                this.nextUpdate = 0;
-            } else
-                this.nextUpdate = -1;
-        },
-        clearOutput: function() {
-            if (this.outputContext) {
-                this.outputContext.beginPath();
-                this.outputContext.rect(0, 0, this.output.width, this.output.height);
-                this.outputContext.fill();
-            }
-        }
     };
 
     Nestled.PatternTable = PatternTable;

@@ -5,21 +5,16 @@
       palettesCount => Integer (Default: 4)
       colorsCount   => Integer (Default: 4)
       colors => Nestled.Colors
-      output => Canvas object
     */
     function Palette(opts) {
         this.palettesCount = (opts && opts['palettesCount']) || 4;
         this.colorsCount = (opts && opts['colorsCount']) || 4;
         this.colors = (opts && opts['colors']) || new Nestled.Colors;
         
-        this.initCanvas(this.colorsCount, this.palettesCount);
-        
         this.data = new Uint8Array(this.colorsCount*this.palettesCount);
         
-        if (opts && opts['output'])
-            this.attachOutput(opts['output']);
-        else
-            this.detachOutput();
+        this.initCanvas(this.colorsCount, this.palettesCount);
+        this.output = new Nestled.Output(this.canvas);
     }
 
     Palette.prototype = {
@@ -50,7 +45,8 @@
             
             this.pixels.setUint32(offset*4, this.colors.getPixel(value));
             this.context.putImageData(this.imageData, 0, 0);
-            this.nextUpdate = this.nextUpdate || window.requestAnimationFrame(this.updateOutput.bind(this));
+            
+            this.output.requestUpdate();
         },
         
         //Helper function mainly for setting up tests...
@@ -63,35 +59,6 @@
             }
             this.context.putImageData(this.imageData,0,0);
         },
-        
-        //===============================================================//
-        
-        attachOutput: function(output) {
-            this.output = output;
-            this.outputContext = this.output.getContext('2d', {alpha: false});
-            
-            this.outputContext.imageSmoothingEnabled = false;
-            
-            this.updateOutput();
-        },
-        detachOutput: function() {
-            this.clearOutput();
-            this.nextUpdate = -1;
-        },
-        updateOutput: function() {
-            if (this.outputContext) {
-                this.outputContext.drawImage(this.canvas, 0, 0, this.output.width, this.output.height);
-                this.nextUpdate = 0;
-            } else
-                this.nextUpdate = -1;
-        },
-        clearOutput: function() {
-            if (this.outputContext) {
-                this.outputContext.beginPath();
-                this.outputContext.rect(0, 0, this.output.width, this.output.height);
-                this.outputContext.fill();
-            }
-        }
     };
 
     Nestled.Palette = Palette;

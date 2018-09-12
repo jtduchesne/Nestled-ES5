@@ -8,7 +8,7 @@
     Debugger.prototype = {
         constructor: Debugger,
         
-        //source: An object that responds to #attachOutput(output)
+        //source: An object that have an output which responds to #attach(canvas)
         //target: Canvas object -OR- DOM id of Canvas element
         bindImageOutput: function(name, opts) {
             var source = opts['source'];
@@ -16,12 +16,14 @@
             if (typeof target === 'string')
                 target = document.getElementById(target);
             
-            if (!(source && (typeof source.attachOutput === 'function'))) 
-                console.warn("Nestled: Debugger '" + name + "'s source must respond to #attachOutput.");
-            else if (!(target && (target.nodeName === "CANVAS"))) 
+            if (!(source && source.output))
+                console.warn("Nestled: Debugger '" + name + "'s source must have an 'output'.");
+            else if (!(typeof source.output.attach === 'function'))
+                console.warn("Nestled: Debugger '" + name + "'s output must respond to #attach(canvas).");
+            else if (!(target && (target.nodeName === "CANVAS")))
                 console.warn("Nestled: Debugger '" + name + "'s target must be a CANVAS.");
             else
-                this.outputs[name] = {type: 'image', source: opts['source'], target: target};
+                this.outputs[name] = {type: 'image', source: source.output, target: target};
         },
         
         //source:   A function returning a string
@@ -91,7 +93,7 @@
             var output = this.outputs[name];
             switch(output['type']) {
             case 'image':
-                output['source'].attachOutput(output['target']);
+                output['source'].attach(output['target']);
                 break;
             case 'prop':
                 var zeroFill = this.zeroFill;
@@ -160,7 +162,7 @@
             var output = this.outputs[name];
             switch(output['type']) {
             case 'image':
-                output['source'].detachOutput();
+                output['source'].detach();
                 break;
             default:
                 if (output['intervalID']) clearInterval(output['intervalID']);
