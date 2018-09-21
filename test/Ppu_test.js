@@ -15,7 +15,7 @@ describe("Nestled", function() {
             subject   = new Nestled.Ppu(pseudoNes);
             
             subject.vram = [vram[0].slice(0),vram[1].slice(0)];
-            subject.oam = oam.slice(0);
+            subject.oam.data = oam.slice(0);
             subject.bkgPalette.setBytes(0, bkgPalette);
             subject.sprPalette.setBytes(0, sprPalette);
         });
@@ -314,7 +314,7 @@ describe("Nestled", function() {
                 });
                 
                 it("writes data to oam[oamAddress]", function() {
-                    expect(subject.oam[0]).to.equal(0xAA);
+                    expect(subject.oam.data[0]).to.equal(0xAA);
                 });
             });
             context("when address is 0x2005", function() {

@@ -41,31 +41,51 @@
         //===============================================================//
         
         renderAllPatterns: function() {
-            for (var tileX=0; tileX<16; tileX++)
-                for (var tileY=0; tileY<16; tileY++)
-                    this.renderPattern(tileX, tileY);
+            for (var index=0; index<256; index++)
+                this.renderPattern(index);
             this.context.putImageData(this.imageData, 0, 0);
         },
-        renderPattern: function(tileX, tileY) {
+        renderPattern: function(index, paletteIndex) {
             var x, y;
             var bit0, bit1;
-            var dataAddress = this.baseAddress + ((tileY*16)+tileX)*16;
+            var dataAddress = this.baseAddress + (index*16);
             var shift;
             var color, pixel;
+            
+            var readData = this.ppu.readData.bind(this.ppu);
+            var pixels = this.pixels;
+            var palette = this.palette;
+            if (paletteIndex === undefined) {
+                paletteIndex = 0;
+                palette = this.greyPalette;
+            }
+            
+            var tileX = (index&0x0F)<<3;
+            var tileY = (index&0xF0)>>1;
             for (var fineY=0; fineY<8; fineY++) {
-                y = tileY*8+fineY;
-                bit0 = this.ppu.readData(dataAddress+fineY);
-                bit1 = this.ppu.readData(dataAddress+fineY+8);
+                y = tileY+fineY;
+                
+                bit0 = readData(dataAddress+fineY);
+                bit1 = readData(dataAddress+fineY+8);
                 
                 for (var fineX=0; fineX<8; fineX++) {
-                    x = tileX*8+fineX;
+                    x = tileX+fineX;
+                    
                     shift = fineX^0x7;
                     color = ((bit0>>shift)&0x1) | ((bit1>>shift)&0x1)<<1;
-                    pixel = this.palette.getPixel(0, color).toString(16);
-                    this.pixels.setUint32((y*128 + x)*4, this.palette.getPixel(0, color));
+                    
+                    pixels.setUint32((y*128 + x)*4, palette.getPixel(paletteIndex, color));
                 }
             }
+            
             this.output.requestUpdate();
+        },
+        
+        getPattern: function(patternIndex, paletteIndex) {
+            this.renderPattern(patternIndex, paletteIndex);
+            this.context.putImageData(this.imageData, 0, 0);
+            
+            return this.context.getImageData((patternIndex&0x0F)<<3, (patternIndex>>4)<<3, 8, 8);
         },
     };
 

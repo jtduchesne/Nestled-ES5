@@ -166,7 +166,7 @@
                 if (address < 0x4000) {
                     this.bus.ppu.write(address, data);
                 } else if (address == 0x4014) { //PPU DMA Access
-                    address = data<<16;
+                    address = data<<8;
                     var dmaIn = this.read.bind(this);
                     var dmaOut = this.bus.ppu.write.bind(this.bus.ppu);
                     for(var stopAddress = address+0x100; address<stopAddress; address++)

@@ -9,8 +9,6 @@
         
         //Internal Video RAM (or Character Internal RAM)
         this.vram = [new Uint8Array(0x400), new Uint8Array(0x400)];
-        //Object Attribute Memory
-        this.oam = new Uint8Array(0x100);
         
         //Pattern Tables
         this.patternTables = [new Nestled.PatternTable(this, 0x0000),
@@ -21,6 +19,9 @@
         this.bkgPalette = new Nestled.Palette({colors: this.colors});
         this.sprPalette = new Nestled.Palette({colors: this.colors});
             
+        //Object Attribute Memory
+        this.oam = new Nestled.OAM(this, {palette: this.sprPalette});
+        
         this.powerOff();
         
         this.ntsc = true; //Hardcoded to NTSC for now...
@@ -78,6 +79,7 @@
         renderFrame: function() {
             this.setVBlank();
             if (this.nmiEnabled) this.bus.cpu.doNMI();
+            this.oam.renderSprites();
         },
         
         //== Registers ==================================================//
@@ -136,7 +138,7 @@
                 this.clearScroll();
                 break;
             case 0x4: //$2004 OAM Data
-                returnValue = this.oam[this.oamAddress];
+                returnValue = this.oam.getByte(this.oamAddress);
                 
                 if (!this.vblank) this.oamAddress++;
                 break;
@@ -182,7 +184,7 @@
                 this.oamAddress = data;
                 break;
             case 0x4: //$2004 OAM Data
-                this.oam[this.oamAddress] = data;
+                this.oam.setByte(this.oamAddress, data);
                 this.oamAddress++;
                 break;
             case 0x5: //$2005 Scroll Register
