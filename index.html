@@ -107,7 +107,6 @@
                         <canvas id="debug_pattern_table_right" width="128" height="128"></canvas>
                         <canvas id="debug_bkg_palette" width="120" height="48"></canvas>
                         <canvas id="debug_spr_palette" width="120" height="48"></canvas>
-                        <canvas id="debug_colors" width="256" height="48"></canvas>
                     </div>
                     <div id="debug_screen_2">
                         <canvas id="debug_sprites" width="256" height="256"></canvas>
@@ -136,7 +135,6 @@
         </main>
         
         <script src="src/PPU/Output.js"></script>
-        <script src="src/PPU/Colors.js"></script>
         <script src="src/PPU/Palette.js"></script>
         <script src="src/PPU/PatternTable.js"></script>
         <script src="src/PPU/OAM.js"></script>
@@ -195,7 +193,6 @@
             debug.bindImageOutput('RightPatternTable', {source: nes.ppu.patternTables[1], target: 'debug_pattern_table_right'});
             debug.bindImageOutput('BkgPalette', {source: nes.ppu.bkgPalette, target: 'debug_bkg_palette'});
             debug.bindImageOutput('SprPalette', {source: nes.ppu.sprPalette, target: 'debug_spr_palette'});
-            debug.bindImageOutput('Colors',     {source: nes.ppu.colors, target: 'debug_colors'});
             debug.bindImageOutput('Sprites',    {source: nes.ppu.oam, target: 'debug_sprites'});
             
             //debug.bindDataOutput('exec', {source: nes.cpu.journal.data, target: 'exec_window'});

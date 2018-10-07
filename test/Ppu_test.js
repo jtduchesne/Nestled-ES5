@@ -14,10 +14,11 @@ describe("Nestled", function() {
             pseudoNes = {cartridge: new Nestled.Cartridge({CHRRom: CHRRom})};
             subject   = new Nestled.Ppu(pseudoNes);
             
-            subject.vram = [vram[0].slice(0),vram[1].slice(0)];
-            subject.oam.data = oam.slice(0);
-            subject.bkgPalette.setBytes(0, bkgPalette);
-            subject.sprPalette.setBytes(0, sprPalette);
+            subject.vram[0].set(vram[0]);
+            subject.vram[1].set(vram[1]);
+            subject.oam.data.set(oam);
+            subject.bkgPalette.data.set(bkgPalette);
+            subject.sprPalette.data.set(sprPalette);
         });
         
         it("can be turned on",  function() { expect(subject).to.respondTo('powerOn'); });

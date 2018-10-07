@@ -15,10 +15,9 @@
                               new Nestled.PatternTable(this, 0x1000)];
         
         //Palettes
-        this.colors = new Nestled.Colors;
-        this.bkgPalette = new Nestled.Palette({colors: this.colors});
-        this.sprPalette = new Nestled.Palette({colors: this.colors});
-            
+        this.bkgPalette = new Nestled.Palette;
+        this.sprPalette = new Nestled.Palette;
+        
         //Object Attribute Memory
         this.oam = new Nestled.OAM(this, {palette: this.sprPalette});
         

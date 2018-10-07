@@ -74,7 +74,7 @@
                     shift = fineX^0x7;
                     color = ((bit0>>shift)&0x1) | ((bit1>>shift)&0x1)<<1;
                     
-                    pixels.setUint32((y*128 + x)*4, palette.getPixel(paletteIndex, color));
+                    pixels.setUint32((y*128 + x)*4, palette.getColor(paletteIndex, color));
                 }
             }
             
