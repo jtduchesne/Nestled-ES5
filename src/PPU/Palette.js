@@ -13,24 +13,11 @@
         
         this.data = new Uint8Array(this.colorsCount*this.palettesCount);
         
-        this.initCanvas(this.colorsCount, this.palettesCount);
-        this.output = new Nestled.Output(this.canvas);
+        this.output = new Nestled.DebugOutput(this.colorsCount, this.palettesCount);
     }
 
     Palette.prototype = {
         constructor: Palette,
-        
-        initCanvas: function(width, height) {
-            this.canvas = document.createElement('canvas');
-            this.canvas.width = width;
-            this.canvas.height = height;
-            
-            this.context = this.canvas.getContext('2d', {alpha: false});
-            this.imageData = this.context.createImageData(width, height);
-            this.pixels = new DataView(this.imageData.data.buffer);
-        },
-        
-        //===============================================================//
         
         getColor: function(paletteIndex, colorIndex) {
             return this.colors[this.getByte(paletteIndex, colorIndex)];
@@ -43,9 +30,7 @@
             var offset = paletteIndex*this.colorsCount + colorIndex;
             this.data[offset] = value;
             
-            this.pixels.setUint32(offset*4, this.colors[value]);
-            this.context.putImageData(this.imageData, 0, 0);
-            
+            this.output.setPixel(offset, this.colors[value]);
             this.output.requestUpdate();
         },
         

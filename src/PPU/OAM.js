@@ -10,22 +10,11 @@
         this.data = new Uint8Array(64*4);
         this.dirty = [];
         
-        this.initCanvas(64, 64);
-        this.output = new Nestled.Output(this.canvas);
+        this.output = new Nestled.DebugOutput(64, 64);
     }
 
     OAM.prototype = {
         constructor: OAM,
-        
-        initCanvas: function(width, height) {
-            this.canvas = document.createElement('canvas');
-            this.canvas.width = width;
-            this.canvas.height = height;
-            
-            this.context = this.canvas.getContext('2d', {alpha: false});
-        },
-        
-        //===============================================================//
         
         getByte: function(address) {
             return this.data[address];
@@ -57,8 +46,8 @@
             var flipHorizontally = attributes & 0x40;
             var flipVertically = attributes & 0x80;
             
-            this.context.putImageData(this.ppu.sprPatternTable.getPattern(patternIndex, paletteIndex),
-                                      index&0x38, (index&0x07)<<3);
+            this.output.context.putImageData(this.ppu.sprPatternTable.getPattern(patternIndex, paletteIndex),
+                                             index&0x38, (index&0x07)<<3);
             
             this.output.requestUpdate();
         },

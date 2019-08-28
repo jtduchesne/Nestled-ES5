@@ -78,7 +78,7 @@
         renderFrame: function() {
             this.setVBlank();
             if (this.nmiEnabled) this.bus.cpu.doNMI();
-            this.oam.renderSprites();
+            this.oam.renderSprites(true);
         },
         
         //== Registers ==================================================//
