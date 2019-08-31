@@ -1,5 +1,8 @@
 # Nestled
 
+| :exclamation:  This is the unfinished *ECMAScript 5* version of the emulator kept only as reference. See the current maintained version here : [https://github.com/jtduchesne/Nestled](https://github.com/jtduchesne/Nestled).   |
+|-----------------------------------------|
+
 Javascript NES emulator
 
 *Work in progress...*
